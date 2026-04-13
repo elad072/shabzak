@@ -154,30 +154,30 @@ export default function RolesManager({ initialRoles }: RolesManagerProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleMove(idx, 'up')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
-                <MoveUp size={18} />
+            <div className="flex items-center gap-1 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <button onClick={() => handleMove(idx, 'up')} className="p-3 md:p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                <MoveUp size={20} className="md:size-[18px]" />
               </button>
-              <button onClick={() => handleMove(idx, 'down')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
-                <MoveDown size={18} />
+              <button onClick={() => handleMove(idx, 'down')} className="p-3 md:p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                <MoveDown size={20} className="md:size-[18px]" />
               </button>
               
               {editingId === role.id ? (
                 <>
-                  <button onClick={() => handleSaveEdit(role.id)} className="p-2 bg-emerald-500 text-white rounded-lg">
-                    <Check size={18} />
+                  <button onClick={() => handleSaveEdit(role.id)} className="p-3 md:p-2 bg-emerald-500 text-white rounded-lg">
+                    <Check size={20} className="md:size-[18px]" />
                   </button>
-                  <button onClick={() => setEditingId(null)} className="p-2 bg-slate-200 text-slate-500 rounded-lg">
-                    <X size={18} />
+                  <button onClick={() => setEditingId(null)} className="p-3 md:p-2 bg-slate-200 text-slate-500 rounded-lg">
+                    <X size={20} className="md:size-[18px]" />
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => handleEditInit(role)} className="p-2 hover:bg-sky-50 text-sky-500 rounded-lg">
-                    <Edit2 size={18} />
+                  <button onClick={() => handleEditInit(role)} className="p-3 md:p-2 hover:bg-sky-50 text-sky-500 rounded-lg border border-transparent md:border-none">
+                    <Edit2 size={20} className="md:size-[18px]" />
                   </button>
-                  <button onClick={() => handleDelete(role.id)} className="p-2 hover:bg-rose-50 text-rose-500 rounded-lg">
-                    <Trash2 size={18} />
+                  <button onClick={() => handleDelete(role.id)} className="p-3 md:p-2 hover:bg-rose-50 text-rose-500 rounded-lg border border-transparent md:border-none">
+                    <Trash2 size={20} className="md:size-[18px]" />
                   </button>
                 </>
               )}

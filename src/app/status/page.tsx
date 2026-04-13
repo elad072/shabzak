@@ -22,19 +22,19 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
   const { data: roles } = await supabase.from('settings_roles').select('*').order('display_order')
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex flex-col md:flex-row md:items-center justify-between bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-6">
-          <div className="flex items-center gap-6">
-            <a href="/" className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
-              <ChevronRight size={24} />
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-8">
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100 gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
+            <a href="/" className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </a>
             <div>
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                <ClipboardList className="text-sky-500" size={32} />
+              <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2 md:gap-3">
+                <ClipboardList className="text-sky-500 w-6 h-6 md:w-8 md:h-8" />
                 מצבת כוח אדם
               </h1>
-              <p className="text-lg text-slate-400 font-bold uppercase tracking-wider">ניהול נוכחות יומית</p>
+              <p className="text-xs md:text-lg text-slate-400 font-bold uppercase tracking-wider">ניהול נוכחות יומית</p>
             </div>
           </div>
 

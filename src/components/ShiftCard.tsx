@@ -73,10 +73,10 @@ export default function ShiftCard({ title, timeRange, assignments, onAssign, onD
                     e.stopPropagation()
                     onDelete(idx)
                   }}
-                  className="absolute -left-2 -top-2 w-8 h-8 bg-white border border-slate-100 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:border-rose-200 hover:shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10"
+                  className="absolute -left-2 -top-2 w-9 h-9 md:w-8 md:h-8 bg-white border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:shadow-lg transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 z-10 shadow-md md:shadow-none"
                   title="מחק שיבוץ"
                 >
-                  <Trash2 size={14} strokeWidth={3} />
+                  <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5 text-slate-400 hover:text-rose-500" strokeWidth={3} />
                 </button>
               </div>
             )

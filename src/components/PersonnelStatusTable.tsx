@@ -32,7 +32,6 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      // Fetch statuses and assignments in parallel
       const [statusesResponse, assignmentsResponse] = await Promise.all([
         supabase.from('daily_status').select('*').eq('date', date),
         supabase.from('assignments').select('*, person:people(first_name, last_name)').eq('date', date)
@@ -43,7 +42,6 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
       setAssignments(assignments)
       const assignedPersonIds = new Set(assignments.map(a => a.person_id))
 
-      // Merge data
       const mergedPeople = people.map(person => {
         const statusEntry = statuses.find(s => s.person_id === person.id)
         const hasShift = assignedPersonIds.has(person.id)
@@ -51,7 +49,6 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
         let status = statusEntry?.status || null
         let isAutomated = statusEntry?.is_automated || false
 
-        // Automatic logic: If no manual status and has shift -> 'בסיס'
         if (!statusEntry && hasShift) {
           status = 'בסיס'
           isAutomated = true
@@ -82,7 +79,6 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
     const isTogglingOff = person?.status === newStatus
     const statusToSave = isTogglingOff ? null : newStatus
 
-    // Optimistic Update
     const previousPeople = [...peopleState]
     setPeople(prev => prev.map(p => 
       p.id === personId ? { ...p, status: statusToSave, is_automated: false } : p
@@ -91,13 +87,10 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
 
     try {
       if (isTogglingOff) {
-        // If toggling off, we can either delete the row or set status to null
-        // Let's set it to null or delete it to keep DB clean
         const { error } = await supabase
           .from('daily_status')
           .delete()
           .match({ date, person_id: personId })
-
         if (error) throw error
       } else {
         const { error } = await supabase
@@ -108,12 +101,11 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
             status: newStatus,
             is_automated: false,
           }, { onConflict: 'date,person_id' })
-
         if (error) throw error
       }
     } catch (error) {
       console.error('Status update error:', error)
-      setPeople(previousPeople) // Rollback on error
+      setPeople(previousPeople)
       alert('שגיאה בשמירת הסטטוס')
     } finally {
       setIsSaving(null)
@@ -123,28 +115,21 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
   const handleManualSync = async () => {
     setIsLoading(true)
     try {
-      // Find people who are currently 'null' but have a shift
       const peopleToSync = peopleState.filter(p => p.status === null && p.has_shift)
-      
       if (peopleToSync.length === 0) {
         alert('אין אנשים בלתי מוגדרים עם משמרות לסנכרון')
         return
       }
-
       const updates = peopleToSync.map(p => ({
         date,
         person_id: p.id,
         status: 'בסיס' as const,
         is_automated: true
       }))
-
       const { error } = await supabase
         .from('daily_status')
         .upsert(updates, { onConflict: 'date,person_id' })
-
       if (error) throw error
-      
-      // Refresh local data
       await fetchData()
     } catch (error) {
       console.error('Sync error:', error)
@@ -155,14 +140,7 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
   }
 
   const handleWhatsAppExport = () => {
-    // We need to pass the current state to the message generator
-    const message = generateWhatsAppMessage(
-      date,
-      assignmentsState,
-      peopleState, // Pass the merged state
-      roles
-    )
-
+    const message = generateWhatsAppMessage(date, assignmentsState, peopleState, roles)
     const encodedMessage = encodeURIComponent(message)
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank')
   }
@@ -172,6 +150,84 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
     'בית': { label: 'בית', color: 'bg-slate-400', icon: Home },
     'סגור': { label: 'סגור', color: 'bg-rose-500', icon: ShieldX },
   }
+
+  const MobileStatusCards = () => (
+    <div className="md:hidden space-y-4 p-4 pb-20">
+      {peopleState.map((person) => {
+        const role = roles.find(r => r.id === person.default_role_id)
+        const isCurrentSaving = isSaving === person.id
+        
+        return (
+          <div key={person.id} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="p-4 border-b border-slate-50 bg-slate-50/30">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="text-lg font-black text-slate-800 truncate">{person.first_name} {person.last_name}</h4>
+                    {person.has_shift && (
+                      <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                        <Zap size={10} fill="currentColor" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 truncate">{role?.role_name || person.default_role || '-'}</p>
+                </div>
+
+                {person.status ? (
+                  <div className={`flex-shrink-0 px-3 py-1 rounded-full text-white font-black text-[10px] shadow-sm ${statusConfig[person.status].color}`}>
+                    {statusConfig[person.status].label}
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-300 font-black text-[10px]">
+                    לא הוגדר
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-white">
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-2">
+                  {(['בסיס', 'בית', 'סגור'] as const).map((s) => (
+                    <button
+                      key={s}
+                      disabled={isCurrentSaving}
+                      onClick={() => handleStatusUpdate(person.id, s)}
+                      className={`flex-1 h-12 rounded-xl flex items-center justify-center transition-all border-2 ${
+                        person.status === s
+                          ? `${statusConfig[s].color} border-transparent text-white shadow-md scale-[1.02]`
+                          : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                      } ${isCurrentSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {person.status === s && isCurrentSaving ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <span className="text-[11px] font-black">{statusConfig[s].label}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex justify-end items-center px-1">
+                  {person.is_automated ? (
+                    <div className="flex items-center gap-1.5 text-sky-600 font-black text-[9px] bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100">
+                      <Zap size={10} className="text-sky-400" />
+                      משב"ץ
+                    </div>
+                  ) : person.status ? (
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-black text-[9px] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                      <Check size={10} />
+                      ידני
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 
   if (isLoading) {
     return (
@@ -184,115 +240,114 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
 
   return (
     <div className="w-full">
-      <div className="p-6 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+      <div className="p-5 md:p-6 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-2 h-6 bg-sky-500 rounded-full" />
           <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">רשימת משרתים</h3>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={handleWhatsAppExport}
-            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-sm hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100/50 active:scale-95"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-sm hover:bg-emerald-600 transition-all shadow-lg active:scale-95"
           >
             <MessageSquare size={18} strokeWidth={2.5} />
-            שידור WhatsApp
+            שידור
           </button>
           <button
             onClick={handleManualSync}
-            className="flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-slate-100 text-slate-600 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 bg-white border-2 border-slate-100 text-slate-600 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95"
           >
             <Zap size={18} className="text-amber-500" />
-            סנכרן משיבוצים
+            סנכרן
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-6 md:mx-0">
-        <div className="min-w-[800px] md:min-w-full">
-          <table className="w-full text-right border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 font-black uppercase tracking-widest">
-                <th className="p-4 md:p-6 text-sm">שם מלא</th>
-                <th className="p-4 md:p-6 text-sm text-center">סטטוס נוכחי</th>
-                <th className="p-4 md:p-6 text-sm text-center">שינוי סטטוס</th>
-                <th className="p-4 md:p-6 text-sm">מקור</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-            {peopleState.map((person) => {
-              const role = roles.find(r => r.id === person.default_role_id)
-              const isCurrentSaving = isSaving === person.id
-              
-              return (
-                <tr key={person.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-6">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <p className="text-xl font-black text-slate-800">{person.first_name} {person.last_name}</p>
-                        <p className="text-sm font-bold text-slate-400">{role?.role_name || person.default_role || '-'}</p>
-                      </div>
-                      {person.has_shift && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded-lg border border-amber-100 uppercase tracking-tighter">
-                          <Zap size={10} fill="currentColor" />
-                          משמרת
-                        </span>
-                      )}
+      <MobileStatusCards />
+
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-right border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-100 text-xs text-slate-400 font-black uppercase tracking-widest">
+              <th className="p-6 text-sm">שם מלא</th>
+              <th className="p-6 text-sm text-center">סטטוס נוכחי</th>
+              <th className="p-6 text-sm text-center">שינוי סטטוס</th>
+              <th className="p-6 text-sm">מקור</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+          {peopleState.map((person) => {
+            const role = roles.find(r => r.id === person.default_role_id)
+            const isCurrentSaving = isSaving === person.id
+            
+            return (
+              <tr key={person.id} className="hover:bg-slate-50/80 transition-colors">
+                <td className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-xl font-black text-slate-800">{person.first_name} {person.last_name}</p>
+                      <p className="text-sm font-bold text-slate-400">{role?.role_name || person.default_role || '-'}</p>
                     </div>
-                  </td>
-                  <td className="p-6 text-center">
-                    {person.status ? (
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-black text-sm shadow-sm ${statusConfig[person.status].color} animate-in fade-in zoom-in duration-300`}>
-                        {statusConfig[person.status].label}
-                      </div>
-                    ) : (
-                      <span className="text-slate-200 font-bold text-sm">טרם הוגדר</span>
+                    {person.has_shift && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded-lg border border-amber-100 uppercase tracking-tighter">
+                        <Zap size={10} fill="currentColor" />
+                        משמרת
+                      </span>
                     )}
-                  </td>
-                  <td className="p-6">
-                    <div className="flex items-center justify-center gap-2">
-                       {(['בסיס', 'בית', 'סגור'] as const).map((s) => (
-                        <button
-                          key={s}
-                          disabled={isCurrentSaving}
-                          onClick={() => handleStatusUpdate(person.id, s)}
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all border-2 relative ${
-                            person.status === s
-                              ? `${statusConfig[s].color} border-transparent text-white shadow-md scale-105 z-10`
-                              : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300 hover:text-slate-500 hover:bg-slate-50'
-                          } ${isCurrentSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          title={statusConfig[s].label}
-                        >
-                          {person.status === s ? (
-                            isCurrentSaving ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} strokeWidth={4} />
-                          ) : (() => {
-                            const Icon = statusConfig[s].icon
-                            return <Icon size={20} />
-                          })()}
-                        </button>
-                      ))}
+                  </div>
+                </td>
+                <td className="p-6 text-center">
+                  {person.status ? (
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-black text-sm shadow-sm ${statusConfig[person.status].color}`}>
+                      {statusConfig[person.status].label}
                     </div>
-                  </td>
-                  <td className="p-6">
-                    {person.is_automated ? (
-                      <div className="flex items-center gap-2 text-sky-600 font-black text-[11px] bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-100 w-fit uppercase tracking-wider">
-                        <Info size={12} />
-                        משיבוץ
-                      </div>
-                    ) : person.status ? (
-                      <div className="flex items-center gap-2 text-emerald-600 font-black text-[11px] bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 w-fit uppercase tracking-wider">
-                        <Check size={12} />
-                        ידני
-                      </div>
-                    ) : null}
-                  </td>
-                </tr>
-              )
-            })}
+                  ) : (
+                    <span className="text-slate-200 font-bold text-sm">טרם הוגדר</span>
+                  )}
+                </td>
+                <td className="p-6">
+                  <div className="flex items-center justify-center gap-2">
+                     {(['בסיס', 'בית', 'סגור'] as const).map((s) => (
+                      <button
+                        key={s}
+                        disabled={isCurrentSaving}
+                        onClick={() => handleStatusUpdate(person.id, s)}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all border-2 relative ${
+                          person.status === s
+                            ? `${statusConfig[s].color} border-transparent text-white shadow-md scale-105 z-10`
+                            : 'bg-white border-slate-100 text-slate-300 hover:border-slate-300 hover:text-slate-500 hover:bg-slate-50'
+                        } ${isCurrentSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={statusConfig[s].label}
+                      >
+                        {person.status === s ? (
+                          isCurrentSaving ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} strokeWidth={4} />
+                        ) : (() => {
+                          const Icon = statusConfig[s].icon
+                          return <Icon size={20} />
+                        })()}
+                      </button>
+                    ))}
+                  </div>
+                </td>
+                <td className="p-6">
+                  {person.is_automated ? (
+                    <div className="flex items-center gap-1 text-sky-600 font-black text-[11px] bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-100 w-fit uppercase tracking-wider">
+                      <Info size={12} />
+                      משיבוץ
+                    </div>
+                  ) : person.status ? (
+                    <div className="flex items-center gap-1 text-emerald-600 font-black text-[11px] bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 w-fit uppercase tracking-wider">
+                      <Check size={12} />
+                      ידני
+                    </div>
+                  ) : null}
+                </td>
+              </tr>
+            )
+          })}
           </tbody>
         </table>
       </div>
     </div>
-  </div>
-)
+  )
 }
-

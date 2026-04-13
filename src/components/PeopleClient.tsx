@@ -133,12 +133,12 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
                   <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400">
                     <span className="text-xl font-black">{(person.first_name?.[0] || '')}{(person.last_name?.[0] || '')}</span>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openModal(person)} className="p-2 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all">
-                      <Edit2 size={18} />
+                  <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openModal(person)} className="p-3 md:p-2 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl hover:bg-sky-50 hover:text-sky-600 transition-all shadow-sm md:shadow-none">
+                      <Edit2 className="w-5 h-5 md:w-4.5 md:h-4.5" />
                     </button>
-                    <button onClick={() => handleDelete(person.id)} className="p-2 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all">
-                      <Trash2 size={18} />
+                    <button onClick={() => handleDelete(person.id)} className="p-3 md:p-2 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all shadow-sm md:shadow-none">
+                      <Trash2 className="w-5 h-5 md:w-4.5 md:h-4.5" />
                     </button>
                   </div>
                 </div>
