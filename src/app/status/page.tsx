@@ -3,7 +3,8 @@ import PersonnelStatusTable from '@/components/PersonnelStatusTable'
 import { ClipboardList, ChevronRight } from 'lucide-react'
 import DateFilter from '@/components/DateFilter'
 
-export default async function StatusPage({ searchParams }: { searchParams: { date?: string } }) {
+export default async function StatusPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+  const { date } = await searchParams
   const supabase = await createClient()
 
   const {
@@ -14,35 +15,11 @@ export default async function StatusPage({ searchParams }: { searchParams: { dat
     return <div>אנא התחבר מחדש</div>
   }
 
-  const selectedDate = searchParams.date || new Date().toISOString().split('T')[0]
+  const selectedDate = date || new Date().toISOString().split('T')[0]
 
-  // Fetch all people
+  // Fetch all people and roles
   const { data: people } = await supabase.from('people').select('*').order('last_name')
-  
-  // Fetch roles
   const { data: roles } = await supabase.from('settings_roles').select('*').order('display_order')
-
-  // Fetch statuses for the specific date
-  const { data: statuses } = await supabase
-    .from('daily_status')
-    .select('*')
-    .eq('date', selectedDate)
-
-  // Fetch assignments for the specific date
-  const { data: assignments } = await supabase
-    .from('assignments')
-    .select('*, person:people(first_name, last_name)')
-    .eq('date', selectedDate)
-
-  // Combined data for the table
-  const peopleWithStatus = people?.map(person => {
-    const statusEntry = statuses?.find(s => s.person_id === person.id)
-    return {
-      ...person,
-      status: statusEntry?.status || 'בית',
-      is_automated: statusEntry?.is_automated || false
-    }
-  })
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
@@ -66,12 +43,8 @@ export default async function StatusPage({ searchParams }: { searchParams: { dat
 
         <main className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
           <PersonnelStatusTable 
-            key={selectedDate}
-            initialPeople={peopleWithStatus || []} 
             roles={roles || []}
             people={people || []}
-            assignments={assignments || []}
-            statuses={statuses || []}
             date={selectedDate}
           />
         </main>

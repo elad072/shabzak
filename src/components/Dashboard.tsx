@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import ShiftCard from './ShiftCard'
 import ShiftModal from './ShiftModal'
+import StatsModal from './StatsModal'
 import { createClient } from '../utils/supabase/client'
-import { Calendar as CalendarIcon, ArrowDownCircle } from 'lucide-react'
+import { Calendar as CalendarIcon, ArrowDownCircle, BarChart3 } from 'lucide-react'
 
 interface DashboardProps {
   initialPeople: any[]
@@ -16,6 +17,7 @@ interface DashboardProps {
 export default function Dashboard({ initialPeople, initialAssignments, initialRoles, startDate }: DashboardProps) {
   const [assignments, setAssignments] = useState(initialAssignments)
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; shiftType: 'day' | 'night'; slotIndex: number } | null>(null)
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false)
   
   const supabase = createClient()
   const todayStr = new Date().toISOString().split('T')[0]
@@ -80,18 +82,43 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     }
   }
 
+  const handleDeleteAssignment = async (date: string, shiftType: 'day' | 'night', slotIndex: number) => {
+    if (!confirm('האם לבטל את השיבוץ?')) return
+
+    const { error } = await supabase
+      .from('assignments')
+      .delete()
+      .match({ date, shift_type: shiftType, slot_index: slotIndex })
+
+    if (!error) {
+      setAssignments(prev => prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex)))
+    } else {
+      alert('שגיאה בביטול השיבוץ')
+    }
+  }
+
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
   return (
     <div className="flex flex-col gap-6 pb-20 relative">
-      {/* Scroll to Today Button */}
-      <button 
-        onClick={scrollToToday}
-        className="fixed bottom-10 left-10 p-4 bg-sky-500 text-white rounded-full shadow-2xl hover:bg-sky-600 transition-all z-40 animate-bounce md:flex items-center gap-2 hidden"
-      >
-        <ArrowDownCircle size={24} />
-        <span className="font-black">קפוץ להיום</span>
-      </button>
+      {/* Floating Buttons Container */}
+      <div className="fixed bottom-10 left-10 flex flex-col gap-3 z-40 items-end">
+        <button 
+          onClick={() => setIsStatsModalOpen(true)}
+          className="p-4 bg-sky-600 text-white rounded-full shadow-2xl hover:bg-sky-700 transition-all md:flex items-center gap-2"
+          title="סטטיסטיקת משמרות"
+        >
+          <BarChart3 size={24} />
+          <span className="font-black hidden md:inline">סטטיסטיקה שבועית</span>
+        </button>
+        <button 
+          onClick={scrollToToday}
+          className="p-4 bg-sky-500 text-white rounded-full shadow-2xl hover:bg-sky-600 transition-all animate-bounce md:flex items-center gap-2 hidden"
+        >
+          <ArrowDownCircle size={24} />
+          <span className="font-black">קפוץ להיום</span>
+        </button>
+      </div>
 
       {weekDays.map((date, idx) => {
         const dateStr = date.toISOString().split('T')[0]
@@ -128,6 +155,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
                 timeRange="08:30 - 20:30"
                 assignments={assignments.filter(a => a.date === dateStr && a.shift_type === 'day')}
                 onAssign={(slotIndex) => handleOpenModal(dateStr, 'day', slotIndex)}
+                onDelete={(slotIndex) => handleDeleteAssignment(dateStr, 'day', slotIndex)}
               />
               
               <ShiftCard
@@ -136,6 +164,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
                 assignments={assignments.filter(a => a.date === dateStr && a.shift_type === 'night')}
                 isNight
                 onAssign={(slotIndex) => handleOpenModal(dateStr, 'night', slotIndex)}
+                onDelete={(slotIndex) => handleDeleteAssignment(dateStr, 'night', slotIndex)}
               />
             </div>
           </div>
@@ -151,6 +180,14 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
           roles={initialRoles}
           date={selectedSlot.date}
           shiftType={selectedSlot.shiftType}
+        />
+      )}
+      {isStatsModalOpen && (
+        <StatsModal
+          isOpen={isStatsModalOpen}
+          onClose={() => setIsStatsModalOpen(false)}
+          people={initialPeople}
+          assignments={assignments}
         />
       )}
     </div>

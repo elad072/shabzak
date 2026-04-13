@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '../utils/supabase/client'
-import { UserPlus, Edit2, Trash2, X, Check, Phone, Shield } from 'lucide-react'
+import { UserPlus, Edit2, Trash2, X, Check, Phone, Shield, Search } from 'lucide-react'
 
 interface Person {
   id: string
@@ -20,6 +20,7 @@ interface Role {
 
 export default function PeopleClient({ initialPeople, roles }: { initialPeople: Person[], roles: Role[] }) {
   const [people, setPeople] = useState(initialPeople)
+  const [searchQuery, setSearchQuery] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
   
@@ -93,23 +94,40 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
     }
   }
 
+  const filteredPeople = people.filter(p => {
+    const fullName = `${p.first_name} ${p.last_name}`.toLowerCase()
+    const query = searchQuery.toLowerCase()
+    return fullName.includes(query) || (p.phone && p.phone.includes(query))
+  })
+
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-start">
+      <div className="flex flex-col md:flex-row justify-between gap-6">
         <button 
           onClick={() => openModal()}
-          className="flex items-center gap-3 px-8 py-4 bg-sky-500 border-b-4 border-sky-600 text-white rounded-2xl text-lg font-bold hover:bg-sky-400 transition-all hover:-translate-y-1 active:translate-y-0 active:border-b-0"
+          className="flex items-center gap-3 px-8 py-4 bg-sky-500 border-b-4 border-sky-600 text-white rounded-2xl text-lg font-bold hover:bg-sky-400 transition-all hover:-translate-y-1 active:translate-y-0 active:border-b-0 whitespace-nowrap"
         >
           <UserPlus size={24} />
           הוסף איש צוות
         </button>
+
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input
+            type="text"
+            placeholder="חיפוש לפי שם או טלפון..."
+            className="w-full pr-12 pl-4 py-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-sky-500 outline-none font-bold transition-all shadow-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {people.map(person => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredPeople.map(person => {
           const roleName = roles.find(r => r.id === person.default_role_id)?.role_name || person.default_role || '-'
           return (
-            <div key={person.id} className="glass-card flex flex-col justify-between group bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div key={person.id} className="glass-card flex flex-col justify-between group bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400">

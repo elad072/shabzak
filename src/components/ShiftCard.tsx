@@ -1,4 +1,4 @@
-import { User, Plus } from 'lucide-react'
+import { User, Plus, Trash2 } from 'lucide-react'
 
 interface Assignment {
   person_id: string
@@ -20,10 +20,11 @@ interface ShiftCardProps {
   timeRange: string
   assignments: Assignment[]
   onAssign: (slotIndex: number) => void
+  onDelete: (slotIndex: number) => void
   isNight?: boolean
 }
 
-export default function ShiftCard({ title, timeRange, assignments, onAssign, isNight }: ShiftCardProps) {
+export default function ShiftCard({ title, timeRange, assignments, onAssign, onDelete, isNight }: ShiftCardProps) {
   const slotIndices = [0, 1, 2, 3]
 
   return (
@@ -45,28 +46,39 @@ export default function ShiftCard({ title, timeRange, assignments, onAssign, isN
 
           if (assignment) {
             return (
-              <button
-                key={idx}
-                onClick={() => onAssign(idx)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-white hover:border-sky-300 hover:shadow-md transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-wider text-white shadow-sm"
-                    style={{ backgroundColor: roleData?.color_code || '#94a3b8', borderColor: 'rgba(0,0,0,0.1)' }}
-                  >
-                    {roleData?.role_name || 'תפקיד'}
+              <div key={idx} className="relative group">
+                <button
+                  onClick={() => onAssign(idx)}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-white hover:border-sky-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-wider text-white shadow-sm"
+                      style={{ backgroundColor: roleData?.color_code || '#94a3b8', borderColor: 'rgba(0,0,0,0.1)' }}
+                    >
+                      {roleData?.role_name || 'תפקיד'}
+                    </div>
+                    <span className="text-base font-black text-slate-700">
+                      {assignment.person 
+                        ? `${assignment.person.first_name} ${assignment.person.last_name}` 
+                        : assignment.person_name || 'שם לא ידוע'}
+                    </span>
                   </div>
-                  <span className="text-base font-black text-slate-700 group-hover:text-sky-700 transition-colors">
-                    {assignment.person 
-                      ? `${assignment.person.first_name} ${assignment.person.last_name}` 
-                      : assignment.person_name || 'שם לא ידוע'}
-                  </span>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-sky-50 group-hover:text-sky-500 transition-all">
-                  <User size={16} strokeWidth={3} />
-                </div>
-              </button>
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300">
+                    <User size={16} strokeWidth={3} />
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(idx)
+                  }}
+                  className="absolute -left-2 -top-2 w-8 h-8 bg-white border border-slate-100 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:border-rose-200 hover:shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10"
+                  title="מחק שיבוץ"
+                >
+                  <Trash2 size={14} strokeWidth={3} />
+                </button>
+              </div>
             )
           }
 
@@ -87,3 +99,4 @@ export default function ShiftCard({ title, timeRange, assignments, onAssign, isN
     </div>
   )
 }
+
