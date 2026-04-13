@@ -22,27 +22,35 @@ interface ShiftCardProps {
 const ROLE_CONFIG = {
   'מפקד משמרת': { 
     Icon: ShieldCheck, 
-    bgColor: 'bg-sky-100/80', 
-    textColor: 'text-sky-700',
-    borderColor: 'border-sky-200'
+    bgColor: 'bg-sky-600', 
+    textColor: 'text-white',
+    borderColor: 'border-sky-700',
+    labelColor: 'text-sky-100',
+    iconColor: 'text-sky-600'
   },
   'קצין התגננות': { 
     Icon: UserCog, 
-    bgColor: 'bg-emerald-100/80', 
-    textColor: 'text-emerald-700',
-    borderColor: 'border-emerald-200'
+    bgColor: 'bg-emerald-600', 
+    textColor: 'text-white',
+    borderColor: 'border-emerald-700',
+    labelColor: 'text-emerald-100',
+    iconColor: 'text-emerald-600'
   },
   'סמב"צ': { 
     Icon: Radio, 
-    bgColor: 'bg-amber-100/80', 
-    textColor: 'text-amber-700',
-    borderColor: 'border-amber-200'
+    bgColor: 'bg-amber-500', 
+    textColor: 'text-white',
+    borderColor: 'border-amber-600',
+    labelColor: 'text-amber-50',
+    iconColor: 'text-amber-600'
   },
   'חפיפה': { 
     Icon: RefreshCw, 
-    bgColor: 'bg-purple-100/80', 
-    textColor: 'text-purple-700',
-    borderColor: 'border-purple-200'
+    bgColor: 'bg-indigo-600', 
+    textColor: 'text-white',
+    borderColor: 'border-indigo-700',
+    labelColor: 'text-indigo-100',
+    iconColor: 'text-indigo-600'
   },
 }
 
@@ -74,19 +82,19 @@ export default function ShiftCard({ title, timeRange, assignments, onAssign, isN
               onClick={() => onAssign(assignment?.role as Role || 'סמב"צ', idx)}
               className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right group relative overflow-hidden ${
                 assignment 
-                  ? `${config?.bgColor} ${config?.borderColor}` 
+                  ? `${config?.bgColor} ${config?.borderColor} shadow-lg shadow-black/5` 
                   : 'bg-slate-50 border-slate-100 hover:border-slate-200 border-dashed'
               }`}
             >
               <div className={`p-2 rounded-lg ${assignment ? 'bg-white shadow-sm' : 'bg-white/50 border border-slate-100'}`}>
-                <Icon size={18} className={assignment ? config?.textColor : 'text-slate-300'} />
+                <Icon size={18} className={assignment ? config?.iconColor : 'text-slate-300'} />
               </div>
               
               <div className="flex-1 min-w-0">
-                <p className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${assignment ? config?.textColor : 'text-slate-300'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${assignment ? config?.labelColor : 'text-slate-300'}`}>
                   {assignment ? assignment.role : `משבץ ${idx + 1}`}
                 </p>
-                <p className={`text-base font-bold truncate ${assignment ? 'text-slate-900' : 'text-slate-300 font-medium'}`}>
+                <p className={`text-base font-black truncate ${assignment ? 'text-white' : 'text-slate-300 font-medium'}`}>
                   {assignment ? assignment.person_name : 'שיבוץ ריק...'}
                 </p>
               </div>
