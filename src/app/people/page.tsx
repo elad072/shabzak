@@ -17,6 +17,7 @@ export default async function PeoplePage() {
   }
 
   const { data: people } = await supabase.from('people').select('*').order('last_name')
+  const { data: roles } = await supabase.from('settings_roles').select('*').order('display_order')
 
   return (
     <div className="min-h-screen p-8 lg:p-12">
@@ -33,7 +34,7 @@ export default async function PeoplePage() {
       </header>
 
       <main className="max-w-7xl mx-auto">
-        <PeopleClient initialPeople={people || []} />
+        <PeopleClient initialPeople={people || []} roles={roles || []} />
       </main>
     </div>
   )
