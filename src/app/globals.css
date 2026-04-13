@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heebo: var(--font-heebo), sans-serif;
+
+  --color-brand-primary: var(--color-sky-500);
+  --color-brand-secondary: var(--color-slate-600);
+}
+
+:root {
+  --background: oklch(0.98 0.01 260);
+  --foreground: oklch(0.2 0.02 260);
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900;
+  }
+}
+
+/* Custom Spacious Card Utility */
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-slate-200 shadow-sm rounded-2xl p-6 transition-all duration-300;
+}
+
+.glass-card:hover {
+  @apply shadow-lg border-slate-300;
+}
+
+/* RTL Specific Overrides if needed */
+[dir="rtl"] .ml-auto {
+  margin-left: initial;
+  margin-right: auto;
+}
