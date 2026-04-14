@@ -33,7 +33,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${heebo.variable} font-heebo antialiased bg-slate-50 text-slate-900 flex flex-col min-h-[100dvh]`}
       >
-        <Toaster position="top-center" rtl={true} richColors />
+        <Toaster position="top-center" dir="rtl" richColors />
         {user && <GlobalNav />}
         <div className={`flex-1 ${user ? 'pb-24 md:pb-0' : ''}`}>
           {children}
