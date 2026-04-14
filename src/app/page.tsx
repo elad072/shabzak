@@ -46,53 +46,13 @@ export default async function Home() {
     .lte('date', saturday.toISOString().split('T')[0])
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 lg:p-10">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Modern Header Container */}
-        <header className="flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-8">
-            <div className="text-center md:text-right">
-              <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-2">SHABZAK</h1>
-              <p className="text-lg text-slate-400 font-bold uppercase tracking-wider">מערכת ניהול משמרות כ"א</p>
-            </div>
-            
-            <StatusSummary counts={counts} />
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto">
+        <div className="px-4 sm:px-6 lg:px-10 pt-6 pb-6 md:pb-8">
+          <StatusSummary counts={counts} />
+        </div>
 
-            <nav className="flex items-center gap-2">
-              <form action="/auth/signout" method="post">
-                <button className="px-6 py-4 bg-slate-900 border-b-4 border-slate-950 text-white rounded-2xl font-black hover:bg-slate-800 transition-all active:translate-y-1 active:border-b-0">
-                  התנתק
-                </button>
-              </form>
-            </nav>
-          </div>
-
-          {/* Sub Navigation */}
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar">
-            <a href="/" className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-sky-500 text-white rounded-xl md:rounded-2xl font-black shadow-lg shadow-sky-100 transition-all whitespace-nowrap text-sm md:text-base">
-              <LayoutDashboard size={18} />
-              לוח משמרות
-            </a>
-            <a href="/status" className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white border-2 border-slate-100 text-slate-600 rounded-xl md:rounded-2xl font-black hover:border-sky-200 hover:text-sky-600 transition-all whitespace-nowrap text-sm md:text-base">
-              <ClipboardList size={18} />
-              מצבת יומית
-            </a>
-            <a href="/people" className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white border-2 border-slate-100 text-slate-600 rounded-xl md:rounded-2xl font-black hover:border-sky-200 hover:text-sky-600 transition-all whitespace-nowrap text-sm md:text-base">
-              <Users size={18} />
-              ניהול צוות
-            </a>
-            <a href="/report" className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white border-2 border-slate-100 text-slate-600 rounded-xl md:rounded-2xl font-black hover:border-sky-200 hover:text-sky-600 transition-all whitespace-nowrap text-sm md:text-base">
-              <FileBarChart size={18} />
-              דוחות ושידור
-            </a>
-            <a href="/settings" className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white border-2 border-slate-100 text-slate-600 rounded-xl md:rounded-2xl font-black hover:border-sky-200 hover:text-sky-600 transition-all whitespace-nowrap text-sm md:text-base">
-              <Settings size={18} />
-              הגדרות
-            </a>
-          </div>
-        </header>
-
-        <main>
+        <main className="px-4 sm:px-6 lg:px-10 pb-10">
           <Dashboard 
             initialPeople={people || []} 
             initialAssignments={assignments || []} 

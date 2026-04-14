@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import ShiftCard from './ShiftCard'
 import ShiftModal from './ShiftModal'
 import StatsModal from './StatsModal'
@@ -22,6 +22,16 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
   const supabase = createClient()
   const todayStr = new Date().toISOString().split('T')[0]
   const todayRef = useRef<HTMLDivElement>(null)
+
+  const assignmentsByDateAndShift = useMemo(() => {
+    const dict: Record<string, Record<string, any[]>> = {};
+    for (const a of assignments) {
+      if (!dict[a.date]) dict[a.date] = { day: [], night: [] };
+      if (!dict[a.date][a.shift_type]) dict[a.date][a.shift_type] = [];
+      dict[a.date][a.shift_type].push(a);
+    }
+    return dict;
+  }, [assignments]);
 
   useEffect(() => {
     // Auto-scroll to today
@@ -153,7 +163,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
               <ShiftCard
                 title="משמרת יום"
                 timeRange="08:30 - 20:30"
-                assignments={assignments.filter(a => a.date === dateStr && a.shift_type === 'day')}
+                assignments={assignmentsByDateAndShift[dateStr]?.day || []}
                 onAssign={(slotIndex) => handleOpenModal(dateStr, 'day', slotIndex)}
                 onDelete={(slotIndex) => handleDeleteAssignment(dateStr, 'day', slotIndex)}
               />
@@ -161,7 +171,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
               <ShiftCard
                 title="משמרת לילה"
                 timeRange="20:30 - 08:30"
-                assignments={assignments.filter(a => a.date === dateStr && a.shift_type === 'night')}
+                assignments={assignmentsByDateAndShift[dateStr]?.night || []}
                 isNight
                 onAssign={(slotIndex) => handleOpenModal(dateStr, 'night', slotIndex)}
                 onDelete={(slotIndex) => handleDeleteAssignment(dateStr, 'night', slotIndex)}

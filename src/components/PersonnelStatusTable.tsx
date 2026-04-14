@@ -42,8 +42,13 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
       setAssignments(assignments)
       const assignedPersonIds = new Set(assignments.map(a => a.person_id))
 
+      const statusLookup: Record<string, any> = {}
+      for (const s of statuses) {
+        statusLookup[s.person_id] = s
+      }
+
       const mergedPeople = people.map(person => {
-        const statusEntry = statuses.find(s => s.person_id === person.id)
+        const statusEntry = statusLookup[person.id]
         const hasShift = assignedPersonIds.has(person.id)
         
         let status = statusEntry?.status || null
@@ -152,75 +157,51 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
   }
 
   const MobileStatusCards = () => (
-    <div className="md:hidden space-y-4 p-4 pb-20">
+    <div className="md:hidden space-y-3 p-4 pb-20">
       {peopleState.map((person) => {
         const role = roles.find(r => r.id === person.default_role_id)
         const isCurrentSaving = isSaving === person.id
         
         return (
-          <div key={person.id} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="p-4 border-b border-slate-50 bg-slate-50/30">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="text-lg font-black text-slate-800 truncate">{person.first_name} {person.last_name}</h4>
-                    {person.has_shift && (
-                      <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
-                        <Zap size={10} fill="currentColor" />
-                      </span>
-                    )}
-                  </div>
+          <div key={person.id} className="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="p-3 bg-white flex justify-between items-center gap-3">
+              
+              <div className="flex-1 min-w-0 pr-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h4 className="text-[15px] font-black text-slate-800 truncate leading-tight">{person.first_name} {person.last_name}</h4>
+                  {person.has_shift && (
+                    <Zap size={14} className="text-amber-500 flex-shrink-0" fill="currentColor" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
                   <p className="text-[10px] font-bold text-slate-400 truncate">{role?.role_name || person.default_role || '-'}</p>
                 </div>
-
-                {person.status ? (
-                  <div className={`flex-shrink-0 px-3 py-1 rounded-full text-white font-black text-[10px] shadow-sm ${statusConfig[person.status].color}`}>
-                    {statusConfig[person.status].label}
-                  </div>
-                ) : (
-                  <div className="flex-shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-300 font-black text-[10px]">
-                    לא הוגדר
-                  </div>
-                )}
               </div>
-            </div>
 
-            <div className="p-4 bg-white">
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  {(['בסיס', 'בית', 'סגור'] as const).map((s) => (
+              <div className="flex gap-1.5 flex-shrink-0 pl-1">
+                {(['בסיס', 'בית', 'סגור'] as const).map((s) => {
+                  const Icon = statusConfig[s].icon
+                  const isActive = person.status === s
+                  
+                  return (
                     <button
                       key={s}
                       disabled={isCurrentSaving}
                       onClick={() => handleStatusUpdate(person.id, s)}
-                      className={`flex-1 h-12 rounded-xl flex items-center justify-center transition-all border-2 ${
-                        person.status === s
-                          ? `${statusConfig[s].color} border-transparent text-white shadow-md scale-[1.02]`
-                          : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border-2 ${
+                        isActive
+                          ? `${statusConfig[s].color} border-transparent text-white shadow-md scale-105`
+                          : 'bg-slate-50 border-slate-100 text-slate-400 hover:bg-slate-100'
                       } ${isCurrentSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      {person.status === s && isCurrentSaving ? (
+                      {isActive && isCurrentSaving ? (
                         <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <span className="text-[11px] font-black">{statusConfig[s].label}</span>
+                        <Icon size={18} strokeWidth={isActive ? 3 : 2} />
                       )}
                     </button>
-                  ))}
-                </div>
-                
-                <div className="flex justify-end items-center px-1">
-                  {person.is_automated ? (
-                    <div className="flex items-center gap-1.5 text-sky-600 font-black text-[9px] bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100">
-                      <Zap size={10} className="text-sky-400" />
-                      משב"ץ
-                    </div>
-                  ) : person.status ? (
-                    <div className="flex items-center gap-1.5 text-emerald-600 font-black text-[9px] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                      <Check size={10} />
-                      ידני
-                    </div>
-                  ) : null}
-                </div>
+                  )
+                })}
               </div>
             </div>
           </div>

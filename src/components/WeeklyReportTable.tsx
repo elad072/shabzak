@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { MessageSquare, Filter, CheckSquare, Square, Camera, Check, Download } from 'lucide-react'
 import { generateWhatsAppMessage } from '@/utils/whatsapp'
 import domtoimage from 'dom-to-image'
@@ -27,10 +27,19 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
 
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
+  const indexedAssignments = useMemo(() => {
+    const dict: Record<string, Record<string, Record<string, any[]>>> = {};
+    for (const a of assignments) {
+      if (!dict[a.date]) dict[a.date] = { day: {}, night: {} };
+      if (!dict[a.date][a.shift_type]) dict[a.date][a.shift_type] = {};
+      if (!dict[a.date][a.shift_type][a.role_id]) dict[a.date][a.shift_type][a.role_id] = [];
+      dict[a.date][a.shift_type][a.role_id].push(a);
+    }
+    return dict;
+  }, [assignments]);
+
   const getAssignmentsByRole = (dateStr: string, shiftType: 'day' | 'night', roleId: string) => {
-    return assignments.filter(
-      a => a.date === dateStr && a.shift_type === shiftType && a.role_id === roleId
-    )
+    return indexedAssignments[dateStr]?.[shiftType]?.[roleId] || []
   }
 
   const handleWhatsAppExport = () => {
@@ -38,8 +47,13 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
     const todayAssignments = assignments.filter(a => a.date === todayStr)
     const todayStatuses = statuses.filter(s => s.date === todayStr || !s.date)
 
+    const statusLookup: Record<string, any> = {}
+    for (const s of todayStatuses) {
+      statusLookup[s.person_id] = s
+    }
+
     const peopleWithStatus = people.map(p => {
-      const statusEntry = todayStatuses.find(s => s.person_id === p.id)
+      const statusEntry = statusLookup[p.id]
       return { ...p, status: statusEntry?.status || null }
     })
 

@@ -21,7 +21,7 @@ export default async function PeoplePage() {
 
   return (
     <div className="min-h-screen p-8 lg:p-12">
-      <header className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
+      <header className="hidden md:flex max-w-7xl mx-auto mb-12 justify-between items-end">
         <div>
           <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">ניהול כוח אדם</h1>
           <p className="text-xl text-slate-500 font-medium">הוספה, עריכה ומחיקת אנשי צוות</p>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Heebo } from "next/font/google";
 import "./globals.css";
+import { createClient } from '@/utils/supabase/server';
+import GlobalNav from '@/components/GlobalNav';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,17 +19,23 @@ export const metadata: Metadata = {
   description: "מערכת ניהול משמרות חכמה ומודרנית",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <html lang="he" dir="rtl">
       <body
-        className={`${inter.variable} ${heebo.variable} font-heebo antialiased bg-slate-50 text-slate-900`}
+        className={`${inter.variable} ${heebo.variable} font-heebo antialiased bg-slate-50 text-slate-900 flex flex-col min-h-[100dvh]`}
       >
-        {children}
+        {user && <GlobalNav />}
+        <div className={`flex-1 ${user ? 'pb-24 md:pb-0' : ''}`}>
+          {children}
+        </div>
       </body>
     </html>
   );
