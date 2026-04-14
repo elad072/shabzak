@@ -1,5 +1,6 @@
 import { createClient } from '../../utils/supabase/server'
 import PeopleClient from '../../components/PeopleClient'
+import Link from 'next/link'
 
 export default async function PeoplePage() {
   const supabase = await createClient()
@@ -27,9 +28,9 @@ export default async function PeoplePage() {
           <p className="text-xl text-slate-500 font-medium">הוספה, עריכה ומחיקת אנשי צוות</p>
         </div>
         <nav className="flex gap-4">
-          <a href="/" className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          <Link href="/" className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">
             חזרה ללוח
-          </a>
+          </Link>
         </nav>
       </header>
 

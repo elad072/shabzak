@@ -3,6 +3,7 @@ import { Inter, Heebo } from "next/font/google";
 import "./globals.css";
 import { createClient } from '@/utils/supabase/server';
 import GlobalNav from '@/components/GlobalNav';
+import { Toaster } from 'sonner';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,6 +33,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${heebo.variable} font-heebo antialiased bg-slate-50 text-slate-900 flex flex-col min-h-[100dvh]`}
       >
+        <Toaster position="top-center" rtl={true} richColors />
         {user && <GlobalNav />}
         <div className={`flex-1 ${user ? 'pb-24 md:pb-0' : ''}`}>
           {children}

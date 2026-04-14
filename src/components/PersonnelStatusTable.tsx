@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '../utils/supabase/client'
 import { generateWhatsAppMessage } from '@/utils/whatsapp'
 import { Check, Info, Home, ShieldX, MapPin, MessageSquare, Loader2, Zap } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/Button'
 
 interface PersonWithStatus {
   id: string
@@ -108,10 +110,11 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
           }, { onConflict: 'date,person_id' })
         if (error) throw error
       }
+      toast.success('סטטוס עודכן')
     } catch (error) {
       console.error('Status update error:', error)
       setPeople(previousPeople)
-      alert('שגיאה בשמירת הסטטוס')
+      toast.error('שגיאה בשמירת הסטטוס')
     } finally {
       setIsSaving(null)
     }
@@ -119,12 +122,14 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
 
   const handleManualSync = async () => {
     setIsLoading(true)
+    const peopleToSync = peopleState.filter(p => p.status === null && p.has_shift)
+    if (peopleToSync.length === 0) {
+      toast.error('אין אנשים בלתי מוגדרים עם משמרות לסנכרון')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const peopleToSync = peopleState.filter(p => p.status === null && p.has_shift)
-      if (peopleToSync.length === 0) {
-        alert('אין אנשים בלתי מוגדרים עם משמרות לסנכרון')
-        return
-      }
       const updates = peopleToSync.map(p => ({
         date,
         person_id: p.id,
@@ -136,9 +141,10 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
         .upsert(updates, { onConflict: 'date,person_id' })
       if (error) throw error
       await fetchData()
+      toast.success('הסנכרון הושלם')
     } catch (error) {
       console.error('Sync error:', error)
-      alert('שגיאה בסנכרון הנתונים')
+      toast.error('שגיאה בסנכרון הנתונים')
     } finally {
       setIsLoading(false)
     }
@@ -148,6 +154,7 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
     const message = generateWhatsAppMessage(date, assignmentsState, peopleState, roles)
     const encodedMessage = encodeURIComponent(message)
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank')
+    toast.success('דוח וואטסאפ הופק נפתח בחלון חדש')
   }
 
   const statusConfig = {
@@ -227,20 +234,23 @@ export default function PersonnelStatusTable({ roles, people, date }: PersonnelS
           <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">רשימת משרתים</h3>
         </div>
         <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
-          <button
+          <Button
             onClick={handleWhatsAppExport}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-sm hover:bg-emerald-600 transition-all shadow-lg active:scale-95"
+            className="flex-1 sm:flex-none text-sm w-full md:w-auto"
+            variant="primary"
           >
             <MessageSquare size={18} strokeWidth={2.5} />
             שידור
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleManualSync}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 bg-white border-2 border-slate-100 text-slate-600 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95"
+            className="flex-1 sm:flex-none text-sm gap-2"
+            isLoading={isLoading}
+            variant="secondary"
           >
             <Zap size={18} className="text-amber-500" />
             סנכרן
-          </button>
+          </Button>
         </div>
       </div>
 

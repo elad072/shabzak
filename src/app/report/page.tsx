@@ -1,6 +1,7 @@
 import { createClient } from '../../utils/supabase/server'
 import WeeklyReportTable from '@/components/WeeklyReportTable'
 import { FileBarChart, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ReportPage() {
   const supabase = await createClient()
@@ -47,9 +48,9 @@ export default async function ReportPage() {
       <div className="max-w-[1400px] mx-auto space-y-10">
         <header className="flex items-center justify-between no-print">
           <div className="flex items-center gap-6">
-            <a href="/" className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
+            <Link href="/" className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
               <ChevronRight size={24} />
-            </a>
+            </Link>
             <div>
               <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
                 <FileBarChart className="text-sky-500" size={32} />

@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { LayoutDashboard, Users, FileBarChart, ClipboardList, Settings, LogOut } from 'lucide-react'
 
 export default function GlobalNav() {
@@ -34,7 +35,7 @@ export default function GlobalNav() {
           const isActive = pathname === tab.href
           const Icon = tab.icon
           return (
-            <a 
+            <Link 
               key={tab.href} 
               href={tab.href}
               className={`flex flex-col items-center justify-center p-1 min-w-[70px] transition-colors rounded-xl ${
@@ -45,7 +46,7 @@ export default function GlobalNav() {
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
               </div>
               <span className={`text-[10px] ${isActive ? 'font-black' : 'font-bold'}`}>{tab.name}</span>
-            </a>
+            </Link>
           )
         })}
       </nav>
@@ -63,7 +64,7 @@ export default function GlobalNav() {
               const isActive = pathname === tab.href
               const Icon = tab.icon
               return (
-                <a 
+                <Link 
                   key={tab.href} 
                   href={tab.href}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black transition-all ${
@@ -72,7 +73,7 @@ export default function GlobalNav() {
                 >
                   <Icon size={18} />
                   {tab.name}
-                </a>
+                </Link>
               )
             })}
           </nav>

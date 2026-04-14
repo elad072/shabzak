@@ -13,6 +13,7 @@ interface ShiftModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (roleId: string, personId: string) => void
+  isSaving?: boolean
   people: any[]
   roles: Role[]
   date: string
@@ -21,10 +22,13 @@ interface ShiftModalProps {
   initialPersonId?: string | null
 }
 
+import { Button } from '@/components/ui/Button'
+
 export default function ShiftModal({ 
   isOpen, 
   onClose, 
   onSave, 
+  isSaving = false,
   people, 
   roles,
   date, 
@@ -127,18 +131,16 @@ export default function ShiftModal({
 
         {/* Footer */}
         <div className="p-5 md:p-8 bg-slate-50 border-t border-slate-100 flex-shrink-0">
-          <button
+          <Button
             onClick={() => tempRoleId && tempPersonId && onSave(tempRoleId, tempPersonId)}
             disabled={!tempRoleId || !tempPersonId}
-            className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-lg md:text-xl font-black transition-all flex items-center justify-center gap-2 md:gap-3 ${
-              tempRoleId && tempPersonId
-                ? 'bg-slate-900 border-b-4 border-slate-950 text-white shadow-xl hover:-translate-y-1 active:translate-y-0 active:border-b-0'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60'
-            }`}
+            isLoading={isSaving}
+            className="w-full py-4 md:py-6 rounded-xl md:rounded-2xl text-lg md:text-xl"
+            variant="primary"
           >
             <Check size={24} className="md:size-7" strokeWidth={3} />
             שבץ משמרת
-          </button>
+          </Button>
         </div>
       </div>
     </div>

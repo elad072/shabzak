@@ -6,6 +6,7 @@ import ShiftModal from './ShiftModal'
 import StatsModal from './StatsModal'
 import { createClient } from '../utils/supabase/client'
 import { Calendar as CalendarIcon, ArrowDownCircle, BarChart3 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface DashboardProps {
   initialPeople: any[]
@@ -18,6 +19,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
   const [assignments, setAssignments] = useState(initialAssignments)
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; shiftType: 'day' | 'night'; slotIndex: number } | null>(null)
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false)
+  const [isSavingAssignment, setIsSavingAssignment] = useState(false)
   
   const supabase = createClient()
   const todayStr = new Date().toISOString().split('T')[0]
@@ -73,37 +75,52 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
       role: { role_name: role.role_name, color_code: role.color_code }
     }
 
-    const { error } = await supabase
-      .from('assignments')
-      .upsert({
-        date,
-        shift_type: shiftType,
-        person_id: personId,
-        role_id: roleId,
-        slot_index: slotIndex,
-      }, { onConflict: 'date,shift_type,slot_index' })
+    setIsSavingAssignment(true)
+    try {
+      const { error } = await supabase
+        .from('assignments')
+        .upsert({
+          date,
+          shift_type: shiftType,
+          person_id: personId,
+          role_id: roleId,
+          slot_index: slotIndex,
+        }, { onConflict: 'date,shift_type,slot_index' })
 
-    if (!error) {
+      if (error) throw error
+
       setAssignments(prev => {
         const filtered = prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex))
         return [...filtered, newAssignment]
       })
       setSelectedSlot(null)
+      toast.success('המשמרת שובצה בהצלחה')
+    } catch (error) {
+      console.error(error)
+      toast.error('אירעה שגיאה בשיבוץ המשמרת')
+    } finally {
+      setIsSavingAssignment(false)
     }
   }
 
   const handleDeleteAssignment = async (date: string, shiftType: 'day' | 'night', slotIndex: number) => {
     if (!confirm('האם לבטל את השיבוץ?')) return
 
-    const { error } = await supabase
-      .from('assignments')
-      .delete()
-      .match({ date, shift_type: shiftType, slot_index: slotIndex })
+    const toastId = toast.loading('מבטל שיבוץ...')
 
-    if (!error) {
+    try {
+      const { error } = await supabase
+        .from('assignments')
+        .delete()
+        .match({ date, shift_type: shiftType, slot_index: slotIndex })
+
+      if (error) throw error
+
       setAssignments(prev => prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex)))
-    } else {
-      alert('שגיאה בביטול השיבוץ')
+      toast.success('השיבוץ בוטל', { id: toastId })
+    } catch (error) {
+      console.error(error)
+      toast.error('שגיאה בביטול השיבוץ', { id: toastId })
     }
   }
 
@@ -186,6 +203,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
           isOpen={!!selectedSlot}
           onClose={() => setSelectedSlot(null)}
           onSave={handleSaveAssignment}
+          isSaving={isSavingAssignment}
           people={initialPeople}
           roles={initialRoles}
           date={selectedSlot.date}

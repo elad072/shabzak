@@ -2,6 +2,7 @@ import { createClient } from '../../utils/supabase/server'
 import PersonnelStatusTable from '@/components/PersonnelStatusTable'
 import { ClipboardList, ChevronRight } from 'lucide-react'
 import DateFilter from '@/components/DateFilter'
+import Link from 'next/link'
 
 export default async function StatusPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const { date } = await searchParams
@@ -26,9 +27,9 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
       <div className="max-w-4xl mx-auto space-y-4 md:space-y-8">
         <header className="flex flex-col md:flex-row lg:items-center justify-between bg-transparent md:bg-white p-0 md:p-5 lg:p-8 md:rounded-[2rem] lg:rounded-[2.5rem] shadow-none md:shadow-sm border-0 md:border border-slate-100 gap-4">
           <div className="hidden md:flex items-center gap-4 md:gap-6">
-            <a href="/" className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
+            <Link href="/" className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-sky-500 hover:text-white transition-all">
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-            </a>
+            </Link>
             <div>
               <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2 md:gap-3">
                 <ClipboardList className="text-sky-500 w-6 h-6 md:w-8 md:h-8" />
