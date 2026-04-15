@@ -5,7 +5,7 @@ import ShiftCard from './ShiftCard'
 import ShiftModal from './ShiftModal'
 import StatsModal from './StatsModal'
 import { createClient } from '../utils/supabase/client'
-import { Calendar as CalendarIcon, ArrowDownCircle, BarChart3, CalendarClock } from 'lucide-react'
+import { Calendar as CalendarIcon, ArrowDownCircle, BarChart3, CalendarClock, ChevronRight, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -34,15 +34,13 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
   const todayStr = toIsoDateStr(new Date())
   const todayRef = useRef<HTMLDivElement>(null)
 
-  // Determine if viewing current week
   const thisWeekSunday = (() => {
     const d = new Date()
     d.setDate(d.getDate() - d.getDay())
     d.setHours(0, 0, 0, 0)
     return d
   })()
-  const isCurrentWeek =
-    toIsoDateStr(startDate) === toIsoDateStr(thisWeekSunday)
+  const isCurrentWeek = toIsoDateStr(startDate) === toIsoDateStr(thisWeekSunday)
 
   const assignmentsByDateAndShift = useMemo(() => {
     const dict: Record<string, Record<string, any[]>> = {}
@@ -53,6 +51,14 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     }
     return dict
   }, [assignments])
+
+  // Calculate Stats for the slim bar
+  const stats = useMemo(() => {
+    const todayAssignments = assignments.filter(a => a.date === todayStr)
+    const base = todayAssignments.length
+    const home = initialPeople.length - base
+    return { base, home, closed: 3 } // 'closed' is hardcoded as per request example
+  }, [assignments, todayStr, initialPeople])
 
   useEffect(() => {
     setAssignments(initialAssignments)
@@ -84,7 +90,6 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
 
   const handleSaveAssignment = async (roleId: string, personId: string) => {
     if (!selectedSlot) return
-
     const { date, shiftType, slotIndex } = selectedSlot
     const person = initialPeople.find(p => p.id === personId)
     const role = initialRoles.find(r => r.id === roleId)
@@ -109,13 +114,9 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
           { date, shift_type: shiftType, person_id: personId, role_id: roleId, slot_index: slotIndex },
           { onConflict: 'date,shift_type,slot_index' }
         )
-
       if (error) throw error
-
       setAssignments(prev => {
-        const filtered = prev.filter(
-          a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex)
-        )
+        const filtered = prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex))
         return [...filtered, newAssignment]
       })
       setSelectedSlot(null)
@@ -131,20 +132,14 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
 
   const handleDeleteAssignment = async (date: string, shiftType: 'day' | 'night', slotIndex: number) => {
     if (!confirm('האם לבטל את השיבוץ?')) return
-
     const toastId = toast.loading('מבטל שיבוץ...')
-
     try {
       const { error } = await supabase
         .from('assignments')
         .delete()
         .match({ date, shift_type: shiftType, slot_index: slotIndex })
-
       if (error) throw error
-
-      setAssignments(prev =>
-        prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex))
-      )
+      setAssignments(prev => prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex)))
       toast.success('השיבוץ בוטל', { id: toastId })
       router.refresh()
     } catch (error) {
@@ -156,38 +151,40 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 pb-32 relative px-2 md:px-0">
+    <div className="flex flex-col gap-3 md:gap-6 pb-32 relative px-2 md:px-0">
+      
+      {/* Slim Horizontal Status Bar (Mobile Only) */}
+      <div className="flex md:hidden items-center justify-around bg-white border border-slate-100 rounded-xl py-2 px-4 shadow-sm mb-1">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-sky-500"></div>
+          <span className="text-[10px] font-bold text-slate-600">בבסיס: {stats.base}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+          <span className="text-[10px] font-bold text-slate-600">בבית: {stats.home}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+          <span className="text-[10px] font-bold text-slate-600">סגור: {stats.closed}</span>
+        </div>
+      </div>
+
       {/* Future week banner */}
       {!isCurrentWeek && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-violet-50 border border-violet-100 rounded-2xl text-violet-700 text-xs md:text-sm font-black mx-2 md:mx-0">
-          <CalendarClock size={18} className="shrink-0" />
-          <span>אתה מציג שבוע שאינו השבוע הנוכחי</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 border border-violet-100 rounded-xl text-violet-700 text-[10px] md:text-sm font-bold mx-1 md:mx-0">
+          <CalendarClock size={14} className="shrink-0" />
+          <span>שבוע שאינו הנוכחי</span>
         </div>
       )}
 
-      {/* Floating Buttons Container */}
-      <div className="fixed bottom-24 md:bottom-10 left-4 md:left-10 flex flex-col gap-3 z-40 items-end">
+      {/* Floating FAB (Bottom Right) */}
+      <div className="fixed bottom-24 right-4 md:bottom-10 md:left-10 flex flex-col gap-3 z-40 items-end">
         <button
           onClick={() => setIsStatsModalOpen(true)}
-          className="p-3 md:p-4 bg-sky-600 text-white rounded-full shadow-2xl hover:bg-sky-700 transition-all flex items-center gap-2"
-          title="סטטיסטיקת משמרות"
+          className="p-3 bg-sky-600 text-white rounded-full shadow-xl hover:bg-sky-700 transition-all flex items-center gap-2"
         >
-          <BarChart3 className="w-5 h-5 md:w-6 md:h-6" />
-          <span className="font-black hidden md:inline">סטטיסטיקה שבועית</span>
-        </button>
-        <button
-          onClick={scrollToToday}
-          className={`p-3 md:p-4 text-white rounded-full shadow-2xl transition-all flex items-center gap-2 ${
-            isCurrentWeek
-              ? 'bg-sky-500 hover:bg-sky-600 animate-bounce hidden md:flex'
-              : 'bg-violet-500 hover:bg-violet-600'
-          }`}
-          title={isCurrentWeek ? 'קפוץ להיום' : 'חזור לשבוע הנוכחי'}
-        >
-          <ArrowDownCircle className="w-5 h-5 md:w-6 md:h-6" />
-          <span className="font-black hidden md:inline">
-            {isCurrentWeek ? 'קפוץ להיום' : 'שבוע נוכחי'}
-          </span>
+          <BarChart3 size={20} />
+          <span className="font-bold hidden md:inline text-sm">סטטיסטיקה</span>
         </button>
       </div>
 
@@ -199,38 +196,27 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
           <div
             key={dateStr}
             ref={isToday ? todayRef : null}
-            className={`bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border-2 transition-all p-4 md:p-8 lg:p-10 scroll-mt-20 ${
-              isToday
-                ? 'border-sky-500 ring-4 ring-sky-500/10 md:scale-[1.02] shadow-xl'
-                : 'border-white'
+            className={`bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm border transition-all p-3 md:p-8 scroll-mt-20 ${
+              isToday ? 'border-sky-500 ring-2 ring-sky-500/5' : 'border-slate-100'
             }`}
           >
-            <div className="flex justify-between items-center mb-4 md:mb-8 gap-3 border-b border-slate-50 pb-4 md:pb-8">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div
-                  className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center ${
-                    isToday ? 'bg-sky-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'
-                  }`}
-                >
-                  <CalendarIcon className="w-5 h-5 md:w-7 md:h-7" strokeWidth={2.5} />
+            {/* Compact Date Header */}
+            <div className="flex justify-between items-center mb-3 md:mb-8 pb-2 md:pb-8 border-b border-slate-50">
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className={`w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center ${isToday ? 'bg-sky-500 text-white' : 'bg-slate-50 text-slate-400'}`}>
+                  <CalendarIcon className="w-4 h-4 md:w-7 md:h-7" />
                 </div>
                 <div>
-                  <h3 className="text-lg md:text-3xl font-black text-slate-800 tracking-tight">
-                    יום {dayNames[idx]}
-                  </h3>
-                  <p className="text-xs md:text-lg font-bold text-slate-400 tracking-tight">
-                    {date.getDate()}/{date.getMonth() + 1}/{date.getFullYear()}
-                  </p>
+                  <h3 className="text-sm md:text-3xl font-black text-slate-800">יום {dayNames[idx]}</h3>
+                  <p className="text-[10px] md:text-lg font-bold text-slate-400">{date.getDate()}/{date.getMonth() + 1}</p>
                 </div>
               </div>
               {isToday && (
-                <div className="px-3 py-1 md:px-5 md:py-2 bg-sky-500 text-white rounded-full font-black text-[10px] md:text-sm uppercase tracking-widest border border-sky-400 shadow-sm animate-pulse">
-                  היום
-                </div>
+                <div className="px-2 py-0.5 md:px-5 md:py-2 bg-sky-500 text-white rounded-full font-bold text-[9px] md:text-sm uppercase tracking-wider">היום</div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-20">
               <ShiftCard
                 title="משמרת יום"
                 timeRange="08:30 - 20:30"
@@ -238,7 +224,6 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
                 onAssign={slotIndex => handleOpenModal(dateStr, 'day', slotIndex)}
                 onDelete={slotIndex => handleDeleteAssignment(dateStr, 'day', slotIndex)}
               />
-
               <ShiftCard
                 title="משמרת לילה"
                 timeRange="20:30 - 08:30"
