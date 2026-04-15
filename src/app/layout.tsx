@@ -18,6 +18,15 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "SHABZAK - ניהול משמרות",
   description: "מערכת ניהול משמרות חכמה ומודרנית",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SHABZAK',
+  },
 };
 
 export default async function RootLayout({
