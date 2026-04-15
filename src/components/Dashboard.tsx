@@ -46,8 +46,11 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     const dict: Record<string, Record<string, any[]>> = {}
     for (const a of assignments) {
       if (!dict[a.date]) dict[a.date] = { day: [], night: [], hashal: [] }
-      if (!dict[a.date][a.shift_type]) dict[a.date][a.shift_type] = []
-      dict[a.date][a.shift_type].push(a)
+      const type = a.shift_type
+      if (!dict[a.date][type]) {
+        dict[a.date][type] = []
+      }
+      dict[a.date][type].push(a)
     }
     return dict
   }, [assignments])
@@ -108,25 +111,30 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
 
     setIsSavingAssignment(true)
     try {
+      const upsertData: any = {
+        date,
+        shift_type: shiftType,
+        person_id: personId,
+        slot_index: slotIndex,
+        role_id: shiftType === 'hashal' ? null : roleId
+      }
+
       const { error } = await supabase
         .from('assignments')
-        .upsert(
-          {
-            date,
-            shift_type: shiftType,
-            person_id: personId,
-            role_id: shiftType === 'hashal' ? null : roleId,
-            slot_index: slotIndex
-          },
-          { onConflict: 'date,shift_type,slot_index' }
-        )
+        .upsert(upsertData, { onConflict: 'date,shift_type,slot_index' })
+      
       if (error) throw error
+      
+      // Update local state immediately
       setAssignments(prev => {
         const filtered = prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex))
         return [...filtered, newAssignment]
       })
+      
       setSelectedSlot(null)
       toast.success('המשמרת שובצה בהצלחה')
+      
+      // Force a router refresh to sync with server data
       router.refresh()
     } catch (error: any) {
       console.error('Full Error Object:', JSON.stringify(error, null, 2))
@@ -150,7 +158,9 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
       if (error) throw error
       setAssignments(prev => prev.filter(a => !(a.date === date && a.shift_type === shiftType && a.slot_index === slotIndex)))
       toast.success('השיבוץ בוטל', { id: toastId })
-      router.refresh()
+      setTimeout(() => {
+        router.refresh()
+      }, 500)
     } catch (error) {
       console.error(error)
       toast.error('שגיאה בביטול השיבוץ', { id: toastId })

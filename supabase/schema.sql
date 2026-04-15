@@ -40,13 +40,14 @@ AFTER INSERT OR UPDATE ON public.assignments
 FOR EACH ROW EXECUTE FUNCTION sync_assignment_status();
 
 -- Re-create assignments with its UNIQUE constraint and roles
+-- Re-create assignments with its UNIQUE constraint and roles
 DROP TABLE IF EXISTS public.assignments CASCADE;
 CREATE TABLE public.assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date DATE NOT NULL,
     shift_type TEXT NOT NULL CHECK (shift_type IN ('day', 'night', 'hashal')),
     person_id UUID REFERENCES public.people(id) ON DELETE CASCADE,
-    role_id UUID, -- Added role_id here to ensure it exists
+    role_id UUID REFERENCES public.settings_roles(id) ON DELETE CASCADE,
     slot_index INTEGER NOT NULL CHECK (slot_index >= 0 AND slot_index < 5),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(date, shift_type, slot_index)
@@ -58,6 +59,7 @@ CREATE POLICY "Authenticated users can manage assignments" ON public.assignments
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Re-attach the trigger to the newly created table
+DROP TRIGGER IF EXISTS on_assignment_upsert ON public.assignments;
 CREATE TRIGGER on_assignment_upsert
 AFTER INSERT OR UPDATE ON public.assignments
 FOR EACH ROW EXECUTE FUNCTION sync_assignment_status();
