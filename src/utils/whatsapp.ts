@@ -34,6 +34,12 @@ export const generateWhatsAppMessage = (
     }
   })
 
+  const hashalAssignments = assignments.filter(a => a.shift_type === 'hashal')
+  if (hashalAssignments.length > 0) {
+    message += `\n🚔 *סיור שטח חש"ל:*\n`
+    message += `• ${hashalAssignments.map(a => `${a.person?.first_name || ''} ${a.person?.last_name || ''}`).join(', ')}\n`
+  }
+
   message += `\n--------------------------\n`
   
   // 2. Full Personnel List

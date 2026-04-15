@@ -25,7 +25,7 @@ function toIsoDateStr(d: Date): string {
 
 export default function Dashboard({ initialPeople, initialAssignments, initialRoles, startDate }: DashboardProps) {
   const [assignments, setAssignments] = useState(initialAssignments)
-  const [selectedSlot, setSelectedSlot] = useState<{ date: string; shiftType: 'day' | 'night'; slotIndex: number } | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{ date: string; shiftType: 'day' | 'night' | 'hashal'; slotIndex: number } | null>(null)
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false)
   const [isSavingAssignment, setIsSavingAssignment] = useState(false)
 
@@ -45,7 +45,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
   const assignmentsByDateAndShift = useMemo(() => {
     const dict: Record<string, Record<string, any[]>> = {}
     for (const a of assignments) {
-      if (!dict[a.date]) dict[a.date] = { day: [], night: [] }
+      if (!dict[a.date]) dict[a.date] = { day: [], night: [], hashal: [] }
       if (!dict[a.date][a.shift_type]) dict[a.date][a.shift_type] = []
       dict[a.date][a.shift_type].push(a)
     }
@@ -76,7 +76,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     return d
   })
 
-  const handleOpenModal = (date: string, shiftType: 'day' | 'night', slotIndex: number) => {
+  const handleOpenModal = (date: string, shiftType: 'day' | 'night' | 'hashal', slotIndex: number) => {
     setSelectedSlot({ date, shiftType, slotIndex })
   }
 
@@ -92,8 +92,8 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     if (!selectedSlot) return
     const { date, shiftType, slotIndex } = selectedSlot
     const person = initialPeople.find(p => p.id === personId)
-    const role = initialRoles.find(r => r.id === roleId)
-    if (!person || !role) return
+    const role = shiftType === 'hashal' ? { role_name: 'חש"ל', color_code: '#10b981', id: null } : initialRoles.find(r => r.id === roleId)
+    if (!person || (shiftType !== 'hashal' && !role)) return
 
     const newAssignment = {
       date,
@@ -103,7 +103,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
       slot_index: slotIndex,
       person_name: `${person.first_name} ${person.last_name}`,
       person: { first_name: person.first_name, last_name: person.last_name },
-      role: { role_name: role.role_name, color_code: role.color_code },
+      role: role ? { role_name: role.role_name, color_code: role.color_code } : null,
     }
 
     setIsSavingAssignment(true)
@@ -111,7 +111,13 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
       const { error } = await supabase
         .from('assignments')
         .upsert(
-          { date, shift_type: shiftType, person_id: personId, role_id: roleId, slot_index: slotIndex },
+          {
+            date,
+            shift_type: shiftType,
+            person_id: personId,
+            role_id: shiftType === 'hashal' ? null : roleId,
+            slot_index: slotIndex
+          },
           { onConflict: 'date,shift_type,slot_index' }
         )
       if (error) throw error
@@ -122,15 +128,18 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
       setSelectedSlot(null)
       toast.success('המשמרת שובצה בהצלחה')
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast.error('אירעה שגיאה בשיבוץ המשמרת')
+    } catch (error: any) {
+      console.error('Full Error Object:', JSON.stringify(error, null, 2))
+      console.error('Error Message:', error.message)
+      console.error('Error Details:', error.details)
+      console.error('Error Hint:', error.hint)
+      toast.error(`שגיאה: ${error.message || 'אירעה שגיאה בשיבוץ המשמרת'}`)
     } finally {
       setIsSavingAssignment(false)
     }
   }
 
-  const handleDeleteAssignment = async (date: string, shiftType: 'day' | 'night', slotIndex: number) => {
+  const handleDeleteAssignment = async (date: string, shiftType: 'day' | 'night' | 'hashal', slotIndex: number) => {
     if (!confirm('האם לבטל את השיבוץ?')) return
     const toastId = toast.loading('מבטל שיבוץ...')
     try {
@@ -233,6 +242,15 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
                 onDelete={slotIndex => handleDeleteAssignment(dateStr, 'night', slotIndex)}
               />
             </div>
+
+            <ShiftCard
+              title="סיור שטח חש״ל"
+              timeRange="יומי"
+              variant="hashal"
+              assignments={assignmentsByDateAndShift[dateStr]?.hashal || []}
+              onAssign={slotIndex => handleOpenModal(dateStr, 'hashal', slotIndex)}
+              onDelete={slotIndex => handleDeleteAssignment(dateStr, 'hashal', slotIndex)}
+            />
           </div>
         )
       })}

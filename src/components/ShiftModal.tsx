@@ -18,7 +18,7 @@ interface ShiftModalProps {
   people: any[]
   roles: Role[]
   date: string
-  shiftType: 'day' | 'night'
+  shiftType: 'day' | 'night' | 'hashal'
   initialRoleId?: string | null
   initialPersonId?: string | null
 }
@@ -89,7 +89,7 @@ export default function ShiftModal({
                 {step === 1 ? 'בחירת איש צוות' : 'וידוא תפקיד'}
               </h3>
               <p className="text-[10px] font-medium text-slate-500">
-                {date} • {shiftType === 'day' ? 'משמרת יום' : 'משמרת לילה'}
+                {date} • {shiftType === 'day' ? 'משמרת יום' : shiftType === 'night' ? 'משמרת לילה' : 'סיור שטח חש"ל'}
               </p>
             </div>
           </div>

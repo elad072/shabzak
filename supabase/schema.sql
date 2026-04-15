@@ -1,8 +1,12 @@
 -- Personnel Status Enum
-CREATE TYPE personnel_status AS ENUM ('בסיס', 'בית', 'סגור');
+DO $$ BEGIN
+    CREATE TYPE personnel_status AS ENUM ('בסיס', 'בית', 'סגור');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Daily Status Table
-CREATE TABLE public.daily_status (
+CREATE TABLE IF NOT EXISTS public.daily_status (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date DATE NOT NULL,
     person_id UUID REFERENCES public.people(id) ON DELETE CASCADE,
@@ -14,6 +18,7 @@ CREATE TABLE public.daily_status (
 
 -- RLS for Daily Status
 ALTER TABLE public.daily_status ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Authenticated users can manage daily_status" ON public.daily_status;
 CREATE POLICY "Authenticated users can manage daily_status" ON public.daily_status
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
@@ -39,15 +44,16 @@ DROP TABLE IF EXISTS public.assignments CASCADE;
 CREATE TABLE public.assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date DATE NOT NULL,
-    shift_type TEXT NOT NULL CHECK (shift_type IN ('day', 'night')),
+    shift_type TEXT NOT NULL CHECK (shift_type IN ('day', 'night', 'hashal')),
     person_id UUID REFERENCES public.people(id) ON DELETE CASCADE,
-    assigned_role TEXT NOT NULL CHECK (assigned_role IN ('מפקד משמרת', 'קצין התגננות', 'סמב"צ', 'חפיפה')),
+    role_id UUID, -- Added role_id here to ensure it exists
     slot_index INTEGER NOT NULL CHECK (slot_index >= 0 AND slot_index < 5),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(date, shift_type, slot_index)
 );
 
 ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Authenticated users can manage assignments" ON public.assignments;
 CREATE POLICY "Authenticated users can manage assignments" ON public.assignments
     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
@@ -57,5 +63,5 @@ AFTER INSERT OR UPDATE ON public.assignments
 FOR EACH ROW EXECUTE FUNCTION sync_assignment_status();
 
 -- Existing indexes
-CREATE INDEX idx_assignments_date ON public.assignments(date);
-CREATE INDEX idx_daily_status_date ON public.daily_status(date);
+CREATE INDEX IF NOT EXISTS idx_assignments_date ON public.assignments(date);
+CREATE INDEX IF NOT EXISTS idx_daily_status_date ON public.daily_status(date);

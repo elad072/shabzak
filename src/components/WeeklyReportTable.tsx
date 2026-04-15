@@ -30,15 +30,16 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
   const indexedAssignments = useMemo(() => {
     const dict: Record<string, Record<string, Record<string, any[]>>> = {};
     for (const a of assignments) {
-      if (!dict[a.date]) dict[a.date] = { day: {}, night: {} };
+      if (!dict[a.date]) dict[a.date] = { day: {}, night: {}, hashal: {} };
       if (!dict[a.date][a.shift_type]) dict[a.date][a.shift_type] = {};
-      if (!dict[a.date][a.shift_type][a.role_id]) dict[a.date][a.shift_type][a.role_id] = [];
-      dict[a.date][a.shift_type][a.role_id].push(a);
+      const roleKey = a.role_id || 'hashal_default';
+      if (!dict[a.date][a.shift_type][roleKey]) dict[a.date][a.shift_type][roleKey] = [];
+      dict[a.date][a.shift_type][roleKey].push(a);
     }
     return dict;
   }, [assignments]);
 
-  const getAssignmentsByRole = (dateStr: string, shiftType: 'day' | 'night', roleId: string) => {
+  const getAssignmentsByRole = (dateStr: string, shiftType: 'day' | 'night' | 'hashal', roleId: string) => {
     return indexedAssignments[dateStr]?.[shiftType]?.[roleId] || []
   }
 
@@ -134,10 +135,11 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
     <div className="space-y-6 md:hidden">
       {weekDays.map((date, dateIdx) => {
         const dateStr = date.toISOString().split('T')[0]
-        const rolesWithAssignments = filteredRoles.filter(role => 
-          getAssignmentsByRole(dateStr, 'day', role.id).length > 0 || 
+        const rolesWithAssignments = filteredRoles.filter(role =>
+          getAssignmentsByRole(dateStr, 'day', role.id).length > 0 ||
           getAssignmentsByRole(dateStr, 'night', role.id).length > 0
         )
+        const hashalShifts = indexedAssignments[dateStr]?.hashal?.hashal_default || []
 
         return (
           <div key={dateIdx} className="bg-white rounded-[2rem] border-2 border-slate-100 shadow-xl overflow-hidden">
@@ -197,8 +199,26 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
                   )
                 })
               ) : (
-                <div className="py-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
-                  <p className="text-slate-300 font-black text-sm italic">אין שיבוצים ליום זה</p>
+                !hashalShifts.length && (
+                  <div className="py-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+                    <p className="text-slate-300 font-black text-sm italic">אין שיבוצים ליום זה</p>
+                  </div>
+                )
+              )}
+
+              {hashalShifts.length > 0 && (
+                <div className="p-4 bg-emerald-50 border border-dashed border-emerald-200 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs">🚔</span>
+                    <span className="font-black text-emerald-800 text-xs">סיור שטח חש"ל</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {hashalShifts.map(a => (
+                      <p key={a.id} className="font-black text-slate-800 text-xs bg-white/80 px-2 py-1 rounded-lg border border-emerald-100">
+                        {a.person?.first_name} {a.person?.last_name}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -208,9 +228,9 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
     </div>
   )
 
-  const IndividualShiftTable = ({ type, title, icon, colorClass, borderClass, bgClass, textClass }: { 
-    type: 'day' | 'night', 
-    title: string, 
+  const IndividualShiftTable = ({ type, title, icon, colorClass, borderClass, bgClass, textClass }: {
+    type: 'day' | 'night' | 'hashal',
+    title: string,
     icon: string,
     colorClass: string,
     borderClass: string,
@@ -237,20 +257,20 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredRoles.map((role) => (
-              <tr key={role.id} className="group">
-                <td className="p-4 bg-slate-50 border-l-2 border-slate-200 sticky right-0 z-10 font-black text-slate-700">
+            {type === 'hashal' ? (
+              <tr className="group">
+                <td className="p-4 bg-emerald-50 border-l-2 border-emerald-200 sticky right-0 z-10 font-black text-emerald-900">
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-6 rounded-full" style={{ backgroundColor: role.color_code }} />
-                    <span className="text-sm">{role.role_name}</span>
+                    <div className="w-2 h-6 rounded-full bg-emerald-500" />
+                    <span className="text-sm">סיור שטח חש"ל</span>
                   </div>
                 </td>
                 {weekDays.map((date, idx) => {
                   const dateStr = date.toISOString().split('T')[0]
-                  const roleAssignments = getAssignmentsByRole(dateStr, type, role.id)
+                  const roleAssignments = getAssignmentsByRole(dateStr, 'hashal', 'hashal_default')
                   
                   return (
-                    <td key={idx} className="p-4 border-l border-slate-50 group-hover:bg-slate-50 transition-colors text-center bg-white min-w-[140px]">
+                    <td key={idx} className="p-4 border-l border-slate-50 group-hover:bg-emerald-50/30 transition-colors text-center bg-white min-w-[140px]">
                       {roleAssignments.length > 0 ? (
                         <div className="flex flex-col gap-1">
                           {roleAssignments.map(a => (
@@ -266,7 +286,38 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
                   )
                 })}
               </tr>
-            ))}
+            ) : (
+              filteredRoles.map((role) => (
+                <tr key={role.id} className="group">
+                  <td className="p-4 bg-slate-50 border-l-2 border-slate-200 sticky right-0 z-10 font-black text-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-6 rounded-full" style={{ backgroundColor: role.color_code }} />
+                      <span className="text-sm">{role.role_name}</span>
+                    </div>
+                  </td>
+                  {weekDays.map((date, idx) => {
+                    const dateStr = date.toISOString().split('T')[0]
+                    const roleAssignments = getAssignmentsByRole(dateStr, type, role.id)
+                    
+                    return (
+                      <td key={idx} className="p-4 border-l border-slate-50 group-hover:bg-slate-50 transition-colors text-center bg-white min-w-[140px]">
+                        {roleAssignments.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {roleAssignments.map(a => (
+                              <p key={a.id} className="font-black text-slate-800 text-[13px] leading-tight">
+                                {a.person?.first_name} {a.person?.last_name}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-200 text-xs">-</span>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -379,6 +430,18 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
               borderClass="border-indigo-100"
               bgClass="bg-indigo-50"
               textClass="text-indigo-900"
+            />
+
+            <div className="mx-8 border-t-2 border-dashed border-slate-100 mb-12" />
+
+            <IndividualShiftTable
+              type="hashal"
+              title="סיור שטח חש״ל"
+              icon="🚔"
+              colorClass="bg-emerald-500"
+              borderClass="border-emerald-100"
+              bgClass="bg-emerald-50"
+              textClass="text-emerald-900"
             />
           </div>
         </div>

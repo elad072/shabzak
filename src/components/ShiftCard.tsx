@@ -22,10 +22,75 @@ interface ShiftCardProps {
   onAssign: (slotIndex: number) => void
   onDelete: (slotIndex: number) => void
   isNight?: boolean
+  variant?: 'default' | 'hashal'
 }
 
-export default function ShiftCard({ title, timeRange, assignments, onAssign, onDelete, isNight }: ShiftCardProps) {
-  const slotIndices = [0, 1, 2, 3]
+export default function ShiftCard({ title, timeRange, assignments, onAssign, onDelete, isNight, variant = 'default' }: ShiftCardProps) {
+  const slotIndices = variant === 'hashal' ? [0, 1, 2] : [0, 1, 2, 3]
+
+  if (variant === 'hashal') {
+    return (
+      <div className="col-span-1 lg:col-span-2 mt-4 md:mt-8">
+        <div className="bg-emerald-50/50 border border-dashed border-emerald-200 rounded-xl md:rounded-3xl p-3 md:p-6">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+            <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+              <User className="w-3.5 h-3.5 md:w-6 md:h-6" />
+            </div>
+            <h4 className="text-xs md:text-xl font-black text-emerald-900">{title}</h4>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+            {slotIndices.map((idx) => {
+              const assignment = assignments.find((a) => a.slot_index === idx)
+              const roleData = assignment?.role
+
+              if (assignment) {
+                return (
+                  <div key={idx} className="relative group flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-emerald-100 rounded-lg md:rounded-2xl p-1.5 md:p-3 shadow-sm">
+                    <button
+                      onClick={() => onAssign(idx)}
+                      className="flex-1 flex items-center gap-2 md:gap-3 overflow-hidden"
+                    >
+                      <div
+                        className="px-1.5 py-0.5 rounded-md text-[9px] md:text-[10px] font-bold border text-white flex-shrink-0"
+                        style={{ backgroundColor: roleData?.color_code || '#10b981', borderColor: 'rgba(0,0,0,0.1)' }}
+                      >
+                        {roleData?.role_name || 'חש"ל'}
+                      </div>
+                      <span className="text-sm md:text-base font-bold text-slate-700 truncate">
+                        {assignment.person
+                          ? `${assignment.person.first_name} ${assignment.person.last_name}`
+                          : assignment.person_name || 'שם לא ידוע'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDelete(idx)
+                      }}
+                      className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                    >
+                      <Trash2 className="size-3.5 md:size-4" />
+                    </button>
+                  </div>
+                )
+              }
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => onAssign(idx)}
+                  className="h-10 md:h-[60px] flex items-center justify-center rounded-lg md:rounded-2xl border border-dashed border-emerald-200 text-emerald-300 hover:border-emerald-400 hover:text-emerald-500 transition-all bg-white/40"
+                >
+                  <Plus className="size-3.5 md:size-5" strokeWidth={3} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-2 md:gap-4">
