@@ -27,6 +27,7 @@ export const exportPeopleToExcel = async (people: Person[], roles: Role[]) => {
   // Set RTL
   worksheet.views = [{ rightToLeft: true }];
 
+
   // --- Available Slots Summary (Top) ---
   const availableSlotsHeader = worksheet.addRow(['תקנים פנויים לפי תפקיד']);
   availableSlotsHeader.font = { bold: true, size: 16, color: { argb: 'FF1E293B' } };
@@ -79,18 +80,18 @@ export const exportPeopleToExcel = async (people: Person[], roles: Role[]) => {
   // Add data
   people.forEach((person) => {
     const role = roles.find((r) => r.id === person.default_role_id);
-    const row = worksheet.addRow({
-      rank: person.rank || '',
-      first_name: person.first_name,
-      last_name: person.last_name,
-      role: role ? role.role_name : person.default_role || '',
-      phone: person.phone || '',
-      is_standard: person.is_standard ? 'בתקן' : 'מחוץ לתקן',
-    });
+    const row = worksheet.addRow([
+      person.rank || '',
+      person.first_name,
+      person.last_name,
+      role ? role.role_name : person.default_role || '',
+      person.phone || '',
+      person.is_standard ? 'בתקן' : 'מחוץ לתקן',
+    ]);
 
     // Conditional formatting for standard
     if (!person.is_standard) {
-      row.getCell('is_standard').font = { color: { argb: 'FFFF0000' } };
+      row.getCell(6).font = { color: { argb: 'FFFF0000' } };
     }
     
     row.alignment = { horizontal: 'right', vertical: 'middle' };
