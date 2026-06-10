@@ -27,24 +27,54 @@ export const exportPeopleToExcel = async (people: Person[], roles: Role[]) => {
   // Set RTL
   worksheet.views = [{ rightToLeft: true }];
 
-  // Define columns
-  worksheet.columns = [
-    { header: 'דרגה', key: 'rank', width: 10 },
-    { header: 'שם פרטי', key: 'first_name', width: 15 },
-    { header: 'שם משפחה', key: 'last_name', width: 15 },
-    { header: 'תפקיד', key: 'role', width: 20 },
-    { header: 'טלפון', key: 'phone', width: 15 },
-    { header: 'סטטוס תקן', key: 'is_standard', width: 15 },
-  ];
+  // --- Available Slots Summary (Top) ---
+  const availableSlotsHeader = worksheet.addRow(['תקנים פנויים לפי תפקיד']);
+  availableSlotsHeader.font = { bold: true, size: 16, color: { argb: 'FF1E293B' } };
+  worksheet.mergeCells(`A${availableSlotsHeader.number}:D${availableSlotsHeader.number}`);
+  availableSlotsHeader.alignment = { horizontal: 'center' };
+  
+  const slotsSubHeader = worksheet.addRow(['תפקיד', 'תקן נדרש', 'מאויש', 'פנוי']);
+  slotsSubHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  slotsSubHeader.eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  });
 
-  // Style header
-  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF4F81BD' },
-  };
-  worksheet.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
+  roles.forEach(role => {
+    const occupied = people.filter(p => p.default_role_id === role.id && p.is_standard).length;
+    const required = role.teken_quantity || 0;
+    const available = Math.max(0, required - occupied);
+
+    if (available > 0) {
+      const row = worksheet.addRow([role.role_name, required, occupied, available]);
+      row.alignment = { horizontal: 'center' };
+      row.getCell(4).font = { bold: true, color: { argb: 'FF059669' } };
+      row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
+    }
+  });
+
+  worksheet.addRow([]); // Spacer
+  worksheet.addRow([]); // Spacer
+
+  // --- Main Personnel Table ---
+  const mainTableHeader = worksheet.addRow(['רשימת כוח אדם מפורטת']);
+  mainTableHeader.font = { bold: true, size: 14 };
+  worksheet.mergeCells(`A${mainTableHeader.number}:F${mainTableHeader.number}`);
+
+  const headerRow = worksheet.addRow(['דרגה', 'שם פרטי', 'שם משפחה', 'תפקיד', 'טלפון', 'סטטוס תקן']);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+
+  // Set column widths (manually since we have multiple tables)
+  worksheet.getColumn(1).width = 12;
+  worksheet.getColumn(2).width = 18;
+  worksheet.getColumn(3).width = 18;
+  worksheet.getColumn(4).width = 25;
+  worksheet.getColumn(5).width = 20;
+  worksheet.getColumn(6).width = 15;
 
   // Add data
   people.forEach((person) => {
@@ -66,9 +96,35 @@ export const exportPeopleToExcel = async (people: Person[], roles: Role[]) => {
     row.alignment = { horizontal: 'right', vertical: 'middle' };
   });
 
-  // Add Summary Section
+  // Add General Summary Section
   worksheet.addRow([]);
-  const summaryHeaderRow = worksheet.addRow(['סיכום תקנים']);
+  const generalSummaryHeader = worksheet.addRow(['סיכום כללי']);
+  generalSummaryHeader.font = { bold: true, size: 14 };
+  
+  const totalPeople = people.length;
+  const standardPeople = people.filter(p => p.is_standard).length;
+  const nonStandardPeople = people.filter(p => !p.is_standard).length;
+  
+  const griaPeople = people.filter(p => {
+    const role = roles.find(r => r.id === p.default_role_id);
+    return role?.role_name === 'גריעה';
+  }).length;
+
+  const undefinedTekenPeople = people.filter(p => {
+    const role = roles.find(r => r.id === p.default_role_id);
+    return !role?.teken || role.teken === 'לא הוגדר';
+  }).length;
+
+  worksheet.addRow(['סה"כ צוות', totalPeople]);
+  worksheet.addRow(['כמה בתקן', standardPeople]);
+  worksheet.addRow(['כמה על תקני', nonStandardPeople]);
+  worksheet.addRow(['גריעה', griaPeople]);
+  worksheet.addRow(['תקן לא הוגדר', undefinedTekenPeople]);
+  
+  worksheet.addRow([]);
+
+  // Add Role Summary Section
+  const summaryHeaderRow = worksheet.addRow(['סיכום תקנים לפי תפקיד']);
   summaryHeaderRow.font = { bold: true, size: 14 };
   
   worksheet.addRow(['תפקיד', 'מאויש בתקן', 'תקן נדרש', 'סטטוס']);
@@ -105,15 +161,63 @@ export const exportPeopleToExcel = async (people: Person[], roles: Role[]) => {
     }
   });
 
-  // Borders for all cells
+  // Add Available Slots Section (The "Beautiful" part)
+  worksheet.addRow([]);
+  const availableHeaderRow = worksheet.addRow(['תקנים פנויים (דרושים)']);
+  availableHeaderRow.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
+  availableHeaderRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF10B981' }, // Emerald-500
+  };
+  availableHeaderRow.alignment = { horizontal: 'center' };
+  worksheet.mergeCells(`A${availableHeaderRow.number}:D${availableHeaderRow.number}`);
+
+  const availableSubHeader = worksheet.addRow(['תפקיד', 'תקן כולל', 'מאויש בפועל', 'נותר לאיוש']);
+  availableSubHeader.font = { bold: true, color: { argb: 'FF1F2937' } };
+  availableSubHeader.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFECFDF5' }, // Emerald-50
+  };
+  availableSubHeader.alignment = { horizontal: 'center' };
+
+  roles.forEach((role) => {
+    const occupied = people.filter(
+      (p) => p.default_role_id === role.id && p.is_standard
+    ).length;
+    const required = role.teken_quantity || 0;
+    const available = Math.max(0, required - occupied);
+
+    if (available > 0) {
+      const row = worksheet.addRow([
+        role.role_name,
+        required,
+        occupied,
+        available
+      ]);
+      row.alignment = { horizontal: 'center' };
+      row.getCell(4).font = { bold: true, color: { argb: 'FF059669' } }; // Emerald-600
+      row.getCell(4).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD1FAE5' }, // Emerald-100
+      };
+    }
+  });
+
+  // Borders and general styling for all cells
   worksheet.eachRow((row) => {
     row.eachCell((cell) => {
       cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
+        top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
       };
+      if (!cell.alignment) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+      }
     });
   });
 

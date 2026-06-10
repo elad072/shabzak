@@ -31,6 +31,7 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'accordion'>('grid')
   const [sortBy, setSortBy] = useState<'name' | 'role' | 'standard'>('name')
   const [expandedRoles, setExpandedRoles] = useState<string[]>([])
+  const [isAvailableSlotsOpen, setIsAvailableSlotsOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
   
@@ -156,12 +157,90 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
     total: people.length,
     standard: people.filter(p => p.is_standard).length,
     nonStandard: people.filter(p => !p.is_standard).length,
+    gria: people.filter(p => roles.find(r => r.id === p.default_role_id)?.role_name === 'גריעה').length,
+    undefinedTeken: people.filter(p => {
+      const role = roles.find(r => r.id === p.default_role_id);
+      return !role?.teken || role.teken === 'לא הוגדר';
+    }).length,
   }
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
+      {/* Available Slots Summary Table */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <button
+          onClick={() => setIsAvailableSlotsOpen(!isAvailableSlotsOpen)}
+          className="w-full flex items-center justify-between p-5 md:p-6 hover:bg-slate-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+              <ShieldCheck size={24} />
+            </div>
+            <div className="text-right">
+              <h3 className="text-xl font-black text-slate-800">תקנים פנויים לפי תפקיד</h3>
+              <p className="text-sm font-bold text-slate-400">לחץ לצפייה בפירוט התקנים שטרם אוישו</p>
+            </div>
+          </div>
+          {isAvailableSlotsOpen ? <ChevronUp className="text-slate-400" /> : <ChevronDown className="text-slate-400" />}
+        </button>
+
+        {isAvailableSlotsOpen && (
+          <div className="p-4 md:p-6 border-t border-slate-50 bg-slate-50/30 animate-in slide-in-from-top-2 duration-200">
+            <div className="overflow-x-auto">
+              <table className="w-full text-right border-collapse">
+                <thead>
+                  <tr className="text-[10px] md:text-xs text-slate-400 font-black uppercase tracking-widest border-b border-slate-100">
+                    <th className="pb-4 pr-4">תפקיד</th>
+                    <th className="pb-4 px-4 text-center">תקן כולל</th>
+                    <th className="pb-4 px-4 text-center">מאויש</th>
+                    <th className="pb-4 pl-4 text-center">נותר פנוי</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {roles
+                    .filter(role => (role.teken_quantity || 0) > 0)
+                    .map(role => {
+                      const occupied = people.filter(p => p.default_role_id === role.id && p.is_standard).length
+                      const available = (role.teken_quantity || 0) - occupied
+                      if (available <= 0) return null
+
+                      return (
+                        <tr key={role.id} className="hover:bg-white/50 transition-colors">
+                          <td className="py-4 pr-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-2 h-6 rounded-full" style={{ backgroundColor: role.color_code || '#10b981' }} />
+                              <span className="font-black text-slate-700">{role.role_name}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-center font-bold text-slate-500">{role.teken_quantity}</td>
+                          <td className="py-4 px-4 text-center font-bold text-slate-500">{occupied}</td>
+                          <td className="py-4 pl-4 text-center">
+                            <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-black text-sm">
+                              {available} פנוי
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  {roles.filter(role => {
+                    const occupied = people.filter(p => p.default_role_id === role.id && p.is_standard).length
+                    return (role.teken_quantity || 0) - occupied > 0
+                  }).length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-400 font-bold italic">
+                        אין תקנים פנויים כרגע
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Stats Summary */}
-      <div className="grid grid-cols-3 gap-3 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-6">
         <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
           <Users className="text-sky-500 mb-2" size={24} />
           <span className="text-2xl md:text-3xl font-black text-slate-800">{stats.total}</span>
@@ -176,6 +255,16 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
           <ShieldAlert className="text-amber-500 mb-2" size={24} />
           <span className="text-2xl md:text-3xl font-black text-slate-800">{stats.nonStandard}</span>
           <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">על תקני</span>
+        </div>
+        <div className="bg-rose-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-rose-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <Trash2 className="text-rose-500 mb-2" size={24} />
+          <span className="text-2xl md:text-3xl font-black text-slate-800">{stats.gria}</span>
+          <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">גריעה</span>
+        </div>
+        <div className="bg-indigo-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-indigo-100 shadow-sm flex flex-col items-center justify-center text-center">
+          <Layers className="text-indigo-500 mb-2" size={24} />
+          <span className="text-2xl md:text-3xl font-black text-slate-800">{stats.undefinedTeken}</span>
+          <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">תקן לא הוגדר</span>
         </div>
       </div>
 
@@ -255,8 +344,16 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
           {filteredPeople.map(person => {
             const role = roles.find(r => r.id === person.default_role_id)
             const roleName = role?.role_name || person.default_role || '-'
+            
+            let cardBgClass = person.is_standard ? 'bg-white border-slate-100' : 'bg-amber-50/50 border-amber-200'
+            if (roleName === 'גריעה') {
+              cardBgClass = 'bg-rose-50 border-rose-200'
+            } else if (!role?.teken || role.teken === 'לא הוגדר') {
+              cardBgClass = 'bg-indigo-50 border-indigo-200'
+            }
+
             return (
-              <div key={person.id} className={`glass-card flex flex-col justify-between group border p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all ${person.is_standard ? 'bg-white border-slate-100' : 'bg-amber-50/50 border-amber-200'}`}>
+              <div key={person.id} className={`glass-card flex flex-col justify-between group border p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all ${cardBgClass}`}>
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${person.is_standard ? 'bg-slate-100 text-slate-400' : 'bg-amber-100 text-amber-600'}`}>
@@ -320,8 +417,17 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
               <tbody className="divide-y divide-slate-50">
                 {filteredPeople.map(person => {
                   const role = roles.find(r => r.id === person.default_role_id)
+                  const roleName = role?.role_name || '-'
+                  
+                  let rowBgClass = ''
+                  if (roleName === 'גריעה') {
+                    rowBgClass = 'bg-rose-50/30'
+                  } else if (!role?.teken || role.teken === 'לא הוגדר') {
+                    rowBgClass = 'bg-indigo-50/30'
+                  }
+
                   return (
-                    <tr key={person.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={person.id} className={`hover:bg-slate-50/50 transition-colors group ${rowBgClass}`}>
                       <td className="p-4 md:p-6">
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${person.is_standard ? 'bg-slate-100 text-slate-400' : 'bg-amber-100 text-amber-600'}`}>
