@@ -505,15 +505,26 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
                     value={formData.default_role_id || ''}
                     onChange={e => setFormData({...formData, default_role_id: e.target.value})}
                   >
-                    {roles.map(role => {
-                      const count = people.filter(p => p.default_role_id === role.id && p.is_standard).length
-                      const isFull = !!(role.teken_quantity && role.teken_quantity > 0 && count >= role.teken_quantity)
-                      return (
-                        <option key={role.id} value={role.id} disabled={!!(isFull && formData.is_standard && editingPerson?.default_role_id !== role.id)}>
-                          {role.role_name} {role.teken_quantity ? `(${count}/${role.teken_quantity})` : ''} {isFull ? ' - מלא' : ''}
-                        </option>
-                      )
-                    })}
+                    {roles
+                      .filter(role => {
+                        // Show the role if:
+                        // 1. It's not full
+                        // 2. OR it's the current role of the person we're editing
+                        // 3. OR we're not trying to set a "Standard" status (so capacity doesn't matter)
+                        const count = people.filter(p => p.default_role_id === role.id && p.is_standard).length
+                        const isFull = !!(role.teken_quantity && role.teken_quantity > 0 && count >= role.teken_quantity)
+                        const isCurrentRole = editingPerson?.default_role_id === role.id
+                        
+                        return !isFull || isCurrentRole || !formData.is_standard
+                      })
+                      .map(role => {
+                        const count = people.filter(p => p.default_role_id === role.id && p.is_standard).length
+                        return (
+                          <option key={role.id} value={role.id}>
+                            {role.role_name} {role.teken_quantity ? `(${count}/${role.teken_quantity})` : ''}
+                          </option>
+                        )
+                      })}
                   </select>
                   {formData.default_role_id && (
                     <div className="mt-2 px-4 py-2 bg-sky-50 rounded-xl border border-sky-100">
