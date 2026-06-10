@@ -173,18 +173,18 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
     <div className="flex flex-col gap-3 md:gap-6 pb-32 relative px-2 md:px-0">
       
       {/* Slim Horizontal Status Bar (Mobile Only) */}
-      <div className="flex md:hidden items-center justify-around bg-white border border-slate-100 rounded-xl py-2 px-4 shadow-sm mb-1">
+      <div className="flex md:hidden items-center justify-around bg-white border border-slate-100 rounded-xl py-2.5 px-4 shadow-sm mb-1 sticky top-[60px] z-30 backdrop-blur-md bg-white/90">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-sky-500"></div>
-          <span className="text-[10px] font-bold text-slate-600">בבסיס: {stats.base}</span>
+          <span className="text-[11px] font-black text-slate-700">בבסיס: {stats.base}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-slate-400"></div>
-          <span className="text-[10px] font-bold text-slate-600">בבית: {stats.home}</span>
+          <span className="text-[11px] font-black text-slate-700">בבית: {stats.home}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-          <span className="text-[10px] font-bold text-slate-600">סגור: {stats.closed}</span>
+          <span className="text-[11px] font-black text-slate-700">סגור: {stats.closed}</span>
         </div>
       </div>
 
@@ -215,7 +215,7 @@ export default function Dashboard({ initialPeople, initialAssignments, initialRo
           <div
             key={dateStr}
             ref={isToday ? todayRef : null}
-            className={`bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm border transition-all p-3 md:p-8 scroll-mt-20 ${
+            className={`bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm border transition-all p-4 md:p-8 scroll-mt-32 ${
               isToday ? 'border-sky-500 ring-2 ring-sky-500/5' : 'border-slate-100'
             }`}
           >

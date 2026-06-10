@@ -31,21 +31,21 @@ export default function GlobalNav() {
 
       {/* Mobile Bottom Navigation (Fixed) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-1 pb-safe pt-1 z-50 flex justify-around items-center h-16 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        {tabs.slice(0, 4).map(tab => {
+        {tabs.map(tab => {
           const isActive = pathname === tab.href
           const Icon = tab.icon
           return (
             <Link 
               key={tab.href} 
               href={tab.href}
-              className={`flex flex-col items-center justify-center p-1 min-w-[70px] transition-colors rounded-xl ${
+              className={`flex flex-col items-center justify-center p-1 min-w-[60px] transition-colors rounded-xl ${
                 isActive ? 'text-sky-500' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              <div className={`mb-1 p-1 rounded-lg ${isActive ? 'bg-sky-50' : ''}`}>
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              <div className={`mb-0.5 p-1 rounded-lg ${isActive ? 'bg-sky-50' : ''}`}>
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-[10px] ${isActive ? 'font-black' : 'font-bold'}`}>{tab.name}</span>
+              <span className={`text-[9px] ${isActive ? 'font-black' : 'font-bold'}`}>{tab.name}</span>
             </Link>
           )
         })}

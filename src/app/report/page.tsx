@@ -58,7 +58,7 @@ export default async function ReportPage({
   // Fetch assignments for chosen week
   const { data: assignments } = await supabase
     .from('assignments')
-    .select('*, person:people(first_name, last_name, default_role), role:settings_roles(role_name, color_code)')
+    .select('*, person:people(first_name, last_name, default_role), role:settings_roles(role_name, color_code, rank, teken, teken_quantity)')
     .gte('date', sundayStr)
     .lte('date', saturdayStr)
 

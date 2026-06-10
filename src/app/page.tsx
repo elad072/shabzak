@@ -69,9 +69,17 @@ export default async function Home({
   // Fetch assignments for chosen week
   const { data: assignments } = await supabase
     .from('assignments')
-    .select('*, person:people(first_name, last_name), role:settings_roles(role_name, color_code)')
+    .select('*, person:people(first_name, last_name), role:settings_roles(role_name, color_code, rank, teken, teken_quantity)')
     .gte('date', sundayStr)
     .lte('date', saturdayStr)
+
+  // Calculate assignment stats for today
+  const todayAssignments = assignments?.filter(a => a.date === today) || []
+  const assignmentStats = {
+    assigned: todayAssignments.length,
+    standard: 11, // 4 day + 4 night + 3 hashal
+    available: Math.max(0, 11 - todayAssignments.length)
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -79,7 +87,7 @@ export default async function Home({
       <div className="sticky top-[49px] md:top-[81px] z-40 bg-white/95 backdrop-blur-md border-b-2 border-slate-100 shadow-sm transition-all pb-1">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-2.5 md:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
           {/* Status pills */}
-          <StatusSummary counts={counts} />
+          <StatusSummary counts={counts} assignmentStats={assignmentStats} />
           {/* Week navigator */}
           <WeekFilter startDateStr={sundayStr} endDateStr={saturdayStr} />
         </div>

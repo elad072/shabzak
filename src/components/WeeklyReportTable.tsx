@@ -292,7 +292,14 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
                   <td className="p-4 bg-slate-50 border-l-2 border-slate-200 sticky right-0 z-10 font-black text-slate-700">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-6 rounded-full" style={{ backgroundColor: role.color_code }} />
-                      <span className="text-sm">{role.role_name}</span>
+                      <div className="flex flex-col">
+                        <span className="text-sm">{role.role_name}</span>
+                        <div className="flex gap-2 text-[9px] text-slate-400 font-bold">
+                          {role.rank && <span>{role.rank}</span>}
+                          {role.teken && <span>תקן: {role.teken}</span>}
+                          {role.teken_quantity > 0 && <span>({role.teken_quantity})</span>}
+                        </div>
+                      </div>
                     </div>
                   </td>
                   {weekDays.map((date, idx) => {
@@ -327,14 +334,14 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
   return (
     <div className="space-y-12">
       {/* Controls Header */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 no-print p-6 md:p-8 bg-white rounded-[2rem] md:rounded-[2.5rem] border-2 border-slate-100 shadow-sm">
-        <div className="space-y-6 flex-1">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 md:gap-8 no-print p-5 md:p-8 bg-white rounded-[1.5rem] md:rounded-[2.5rem] border-2 border-slate-100 shadow-sm">
+        <div className="space-y-4 md:space-y-6 flex-1">
           <div className="flex items-center gap-3">
-            <Filter className="text-sky-500" size={24} />
-            <h3 className="text-xl font-black text-slate-800 tracking-tight">התאמת לוח משמרות</h3>
+            <Filter className="text-sky-500 md:w-6 md:h-6" size={20} />
+            <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight">התאמת לוח משמרות</h3>
           </div>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 md:gap-2">
             {roles.map(role => {
               const isActive = selectedRoleIds.includes(role.id)
               return (
@@ -365,27 +372,27 @@ export default function WeeklyReportTable({ assignments, statuses, roles, people
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 md:gap-4">
-          <button 
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-4">
+          <button
             onClick={handleCopyToClipboard}
             disabled={isExporting}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-3 md:py-4 ${showCopySuccess ? 'bg-emerald-500' : 'bg-slate-900'} text-white rounded-[1.2rem] md:rounded-[1.5rem] font-black shadow-xl transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 text-sm md:text-base`}
+            className={`col-span-2 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-4 md:px-8 py-3.5 md:py-4 ${showCopySuccess ? 'bg-emerald-500' : 'bg-slate-900'} text-white rounded-[1rem] md:rounded-[1.5rem] font-black shadow-xl transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 text-xs md:text-base`}
           >
-            {showCopySuccess ? <Check size={20} className="md:size-[24px]" /> : <Camera size={20} className="md:size-[24px]" />}
+            {showCopySuccess ? <Check size={18} className="md:size-[24px]" /> : <Camera size={18} className="md:size-[24px]" />}
             {isExporting ? 'מעבד...' : showCopySuccess ? 'הועתק!' : 'העתק תמונה ל-WhatsApp'}
           </button>
-          <button 
+          <button
             onClick={handleCopyAsImage}
-            className="flex items-center justify-center p-3 md:p-4 bg-white border-2 border-slate-100 text-slate-400 rounded-xl md:rounded-[1.5rem] hover:border-slate-300 transition-all active:scale-95"
+            className="flex items-center justify-center p-3.5 md:p-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[1rem] md:rounded-[1.5rem] hover:border-slate-300 transition-all active:scale-95"
             title="הורד כתמונה"
           >
-            <Download size={20} className="md:size-[24px]" />
+            <Download size={18} className="md:size-[24px]" />
           </button>
-          <button 
+          <button
             onClick={handleWhatsAppExport}
-            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-6 md:px-8 py-3 md:py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-[1.2rem] md:rounded-[1.5rem] font-black shadow-lg transition-all hover:-translate-y-1 active:translate-y-0 text-sm md:text-base"
+            className="flex items-center justify-center gap-2 md:gap-3 px-4 md:px-8 py-3.5 md:py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-[1rem] md:rounded-[1.5rem] font-black shadow-lg transition-all hover:-translate-y-1 active:translate-y-0 text-xs md:text-base"
           >
-            <MessageSquare size={20} className="md:size-[24px]" strokeWidth={2.5} />
+            <MessageSquare size={18} className="md:size-[24px]" strokeWidth={2.5} />
             שידור WhatsApp
           </button>
         </div>

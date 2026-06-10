@@ -20,7 +20,8 @@ export const generateWhatsAppMessage = (
       a => a.shift_type === 'day' && a.role_id === role.id
     )
     if (roleAssignments.length > 0) {
-      message += `• *${role.role_name}:* ${roleAssignments.map(a => `${a.person?.first_name || ''} ${a.person?.last_name || ''}`).join(', ')}\n`
+      const roleLabel = role.rank ? `${role.rank} ${role.role_name}` : role.role_name
+      message += `• *${roleLabel}:* ${roleAssignments.map(a => `${a.person?.first_name || ''} ${a.person?.last_name || ''}`).join(', ')}\n`
     }
   })
 
@@ -30,7 +31,8 @@ export const generateWhatsAppMessage = (
       a => a.shift_type === 'night' && a.role_id === role.id
     )
     if (roleAssignments.length > 0) {
-      message += `• *${role.role_name}:* ${roleAssignments.map(a => `${a.person?.first_name || ''} ${a.person?.last_name || ''}`).join(', ')}\n`
+      const roleLabel = role.rank ? `${role.rank} ${role.role_name}` : role.role_name
+      message += `• *${roleLabel}:* ${roleAssignments.map(a => `${a.person?.first_name || ''} ${a.person?.last_name || ''}`).join(', ')}\n`
     }
   })
 
