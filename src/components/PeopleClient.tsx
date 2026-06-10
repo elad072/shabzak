@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { createClient } from '../utils/supabase/client'
-import { UserPlus, Edit2, Trash2, X, Check, Phone, Shield, Search, LayoutGrid, List, ArrowUpDown, Users, ShieldCheck, ShieldAlert, ChevronDown, ChevronUp, Layers } from 'lucide-react'
+import { UserPlus, Edit2, Trash2, X, Check, Phone, Shield, Search, LayoutGrid, List, ArrowUpDown, Users, ShieldCheck, ShieldAlert, ChevronDown, ChevronUp, Layers, FileSpreadsheet } from 'lucide-react'
+import { exportPeopleToExcel } from '../utils/excelExport'
 
 interface Person {
   id: string
@@ -186,6 +187,15 @@ export default function PeopleClient({ initialPeople, roles }: { initialPeople: 
           >
             <UserPlus size={18} />
             הוסף איש צוות
+          </button>
+
+          <button
+            onClick={() => exportPeopleToExcel(people, roles)}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-500 border-b-4 border-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-400 transition-all active:translate-y-0 active:border-b-0 whitespace-nowrap"
+            title="ייצוא לאקסל"
+          >
+            <FileSpreadsheet size={18} />
+            ייצוא לאקסל
           </button>
           
           <div className="h-10 w-px bg-slate-100 hidden md:block mx-2" />
